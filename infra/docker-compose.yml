@@ -63,7 +63,7 @@ services:
     depends_on:
       - keycloak-db
     environment:
-      # Bootstrap admin
+      # Bootstrap admin (важно при первом запуске / новом volume)
       KEYCLOAK_ADMIN: "${KEYCLOAK_ADMIN:-admin}"
       KEYCLOAK_ADMIN_PASSWORD: "${KEYCLOAK_ADMIN_PASSWORD}"
 
@@ -77,6 +77,8 @@ services:
       KC_PROXY_HEADERS: xforwarded
       KC_HTTP_RELATIVE_PATH: /auth
 
+      # Какой внешний URL видит Keycloak (через nginx)
+      # Для вашего случая: http://localhost:8443/auth
       KC_HOSTNAME: "${KEYCLOAK_HOSTNAME:-http://localhost:8443/auth}"
     command:
       - start-dev
