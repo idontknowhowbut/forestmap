@@ -1,8 +1,4 @@
-```markdown
-# ForestMap — Logical ERD
-
-> Логическая модель системы (домен + внешняя авторизация через Keycloak).  
-> Это не только физические таблицы БД, а сущности предметной области и связи между ними.
+# ForestMap Logical ERD
 
 ```mermaid
 erDiagram
@@ -10,10 +6,8 @@ erDiagram
     FLIGHT ||--o{ TELEMETRY_PACKET : contains
     TELEMETRY_PACKET ||--o{ DETECTION : anchors
     FLIGHT ||--o{ DETECTION : observed_in
-
     DETECTION }o--|| DETECTION_CLASS : classified_as
     DETECTION }o--|| MEDIA_ASSET : sourced_from
-
     KEYCLOAK_REALM ||--o{ OIDC_CLIENT : contains
     OIDC_CLIENT ||--o{ SERVICE_ACCOUNT : has
     SERVICE_ACCOUNT }o--o{ REALM_ROLE : granted
@@ -29,18 +23,18 @@ erDiagram
     FLIGHT {
         string flight_id PK
         string drone_id FK
-        datetime started_at
-        datetime ended_at
+        string started_at
+        string ended_at
         string mission_type
         string status
     }
 
     TELEMETRY_PACKET {
-        uuid packet_id PK
+        string packet_id PK
         string flight_id FK
         string drone_id FK
-        datetime recorded_at
-        string location_4326 "POINTZ"
+        string recorded_at
+        string location
         float heading
         float pitch
         float fov
@@ -49,15 +43,15 @@ erDiagram
     }
 
     DETECTION {
-        uuid detection_id PK
-        uuid telemetry_packet_id FK
+        string detection_id PK
+        string telemetry_packet_id FK
         string flight_id FK
-        datetime detected_at
+        string detected_at
         string class_code FK
         float score
         float severity
-        string geometry_geo_4326 "Polygon now, geometry later"
-        json geometry_image
+        string geometry_geo
+        string geometry_image
         string media_id FK
     }
 
@@ -66,7 +60,7 @@ erDiagram
         string title
         string default_geom_mode
         string description
-        bool active
+        string active
     }
 
     MEDIA_ASSET {
@@ -76,7 +70,7 @@ erDiagram
         string source_type
         int width
         int height
-        datetime created_at
+        string created_at
         string checksum
     }
 
@@ -89,8 +83,8 @@ erDiagram
         string client_id PK
         string realm_name FK
         string client_type
-        bool confidential
-        bool service_accounts_enabled
+        string confidential
+        string service_accounts_enabled
     }
 
     SERVICE_ACCOUNT {
@@ -102,7 +96,7 @@ erDiagram
         string user_id PK
         string username
         string email
-        bool enabled
+        string enabled
     }
 
     REALM_ROLE {
