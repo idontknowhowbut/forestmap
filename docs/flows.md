@@ -72,3 +72,46 @@ sequenceDiagram
     DB-->>API: OK
     API-->>NX: 201 {"status":"saved","count":N}
     NX-->>D: 201 {"status":"saved","count":N}
+
+## 2. Flow: Viewer (оператор карты, чтение детекций)
+
+### Цель
+
+Получить GeoJSON с детекциями и отобразить их на карте.
+
+### Предусловия (текущий этап)
+
+- API доступен
+- Keycloak настроен
+- У клиента/пользователя есть токен с ролью на чтение (например, `viewer`)
+
+### Результат
+
+- Получен `GeoJSON FeatureCollection`
+- Карта показывает объекты (точки/полигоны)
+- При наличии `image_path` можно запросить изображение через `/uploads/...`
+
+### Диаграмма (sequence)
+
+```mermaid
+sequenceDiagram
+    participant V as Viewer App
+    participant KC as Keycloak
+    participant NX as Nginx
+    participant API as Backend API
+    participant DB as PostGIS
+
+    Note over V,KC: Получение access_token (client credentials или user login)
+    V->>KC: Запрос токена
+    KC-->>V: JWT access_token
+
+    V->>NX: POST /api/v1/detections:query (Bearer JWT, filters)
+    NX->>API: POST /v1/detections:query
+    API->>DB: SELECT + GeoJSON build (PostGIS)
+    DB-->>API: GeoJSON FeatureCollection
+    API-->>NX: 200 application/geo+json
+    NX-->>V: 200 application/geo+json
+
+    V->>V: Render features on map (point/polygon)
+    V->>NX: GET /uploads/<file> (optional)
+    NX-->>V: image file (optional)
