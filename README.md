@@ -535,19 +535,12 @@ docker compose --env-file .env up -d --force-recreate api
 docker compose --env-file .env exec nginx nginx -t
 docker compose --env-file .env exec nginx cat /etc/nginx/conf.d/default.conf
 ```
-
----
-
-## Лицензия
-
-Добавьте лицензию (например, MIT или Apache-2.0) перед публичным релизом.
-
 ---
 
 ## Контакты / сопровождение
 
-- Владелец проекта: *заполнить*
-- Репозиторий: *заполнить URL*
+- Владелец проекта: idontknowhow
+- Репозиторий: https://github.com/idontknowhowbut/forestmap/
 - API: `docs/api/openapi.yaml`
 - Flows: `docs/flows/flows.md`
 - ERD: `docs/erd/logical-erd.md`
