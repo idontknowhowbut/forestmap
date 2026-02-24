@@ -1,3 +1,7 @@
+```mermaid
+erDiagram
+...
+
 erDiagram
     %% =========================
     %% Core domain (ForestMap)
