@@ -1,21 +1,23 @@
+```markdown
+# ForestMap — Logical ERD
+
+> Логическая модель системы (домен + внешняя авторизация через Keycloak).  
+> Это не только физические таблицы БД, а сущности предметной области и связи между ними.
+
 ```mermaid
 erDiagram
-...
-
-erDiagram
-    %% =========================
-    %% Core domain (ForestMap)
-    %% =========================
-
     DRONE ||--o{ FLIGHT : performs
     FLIGHT ||--o{ TELEMETRY_PACKET : contains
     TELEMETRY_PACKET ||--o{ DETECTION : anchors
+    FLIGHT ||--o{ DETECTION : observed_in
 
     DETECTION }o--|| DETECTION_CLASS : classified_as
     DETECTION }o--|| MEDIA_ASSET : sourced_from
 
-    %% Optional logical ownership by flight (denormalized in current schema)
-    FLIGHT ||--o{ DETECTION : observed_in
+    KEYCLOAK_REALM ||--o{ OIDC_CLIENT : contains
+    OIDC_CLIENT ||--o{ SERVICE_ACCOUNT : has
+    SERVICE_ACCOUNT }o--o{ REALM_ROLE : granted
+    APP_USER }o--o{ REALM_ROLE : granted
 
     DRONE {
         string drone_id PK
@@ -38,7 +40,7 @@ erDiagram
         string flight_id FK
         string drone_id FK
         datetime recorded_at
-        pointz location_4326
+        string location_4326 "POINTZ"
         float heading
         float pitch
         float fov
@@ -54,7 +56,7 @@ erDiagram
         string class_code FK
         float score
         float severity
-        geometry geometry_geo_4326
+        string geometry_geo_4326 "Polygon now, geometry later"
         json geometry_image
         string media_id FK
     }
@@ -77,15 +79,6 @@ erDiagram
         datetime created_at
         string checksum
     }
-
-    %% =========================
-    %% Auth domain (external / Keycloak)
-    %% =========================
-
-    KEYCLOAK_REALM ||--o{ OIDC_CLIENT : contains
-    OIDC_CLIENT ||--o{ SERVICE_ACCOUNT : has
-    SERVICE_ACCOUNT }o--o{ REALM_ROLE : granted
-    APP_USER }o--o{ REALM_ROLE : granted
 
     KEYCLOAK_REALM {
         string realm_name PK
