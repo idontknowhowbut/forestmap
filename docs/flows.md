@@ -72,7 +72,7 @@ sequenceDiagram
     DB-->>API: OK
     API-->>NX: 201 {"status":"saved","count":N}
     NX-->>D: 201 {"status":"saved","count":N}
-
+```
 ## 2. Flow: Viewer (оператор карты, чтение детекций)
 
 ### Цель
@@ -115,3 +115,4 @@ sequenceDiagram
     V->>V: Render features on map (point/polygon)
     V->>NX: GET /uploads/<file> (optional)
     NX-->>V: image file (optional)
+```
