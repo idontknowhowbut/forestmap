@@ -1,3 +1,8 @@
+# ForestMap ERD
+
+## Application DB (`forestmap`)
+
+```mermaid
 erDiagram
     telemetry ||--o{ detections : "packet_id -> telemetry_packet_id"
 
