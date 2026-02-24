@@ -116,3 +116,100 @@ sequenceDiagram
     V->>NX: GET /uploads/<file> (optional)
     NX-->>V: image file (optional)
 ```
+## 3. Flow: Admin (App Admin — развертывание, проверка и диагностика сервиса)
+
+### Цель
+
+Развернуть стек ForestMap, убедиться, что сервис работает, и уметь быстро локализовать проблему при сбое.
+
+### Предусловия
+
+- Есть доступ к серверу (SSH)
+- Установлены Docker и Docker Compose
+- Подготовлен `.env`
+- Порты свободны (или согласованы значения в `.env`)
+- В репозитории актуальная версия проекта
+
+### Результат
+
+- Контейнеры запущены (`api`, `db`, `frontend`, `nginx`, `keycloak`, `keycloak-db`)
+- API отвечает на `healthz`
+- Nginx проксирует `/api/` и `/auth/`
+- Keycloak доступен и готов к настройке realm/clients
+- Загруженные изображения отдаются через `/uploads/...` (если есть данные)
+
+### Диаграмма (flowchart)
+
+```mermaid
+flowchart TD
+    A[Подготовить .env] --> B[docker compose --env-file .env up -d --build]
+    B --> C[docker compose --env-file .env ps]
+    C --> D{Все сервисы Up?}
+
+    D -- Нет --> E[docker compose --env-file .env logs --tail=200]
+    E --> F[Исправить конфиг / env / порты / сборку]
+    F --> B
+
+    D -- Да --> G[Проверить API healthz :8081]
+    G --> H[Проверить Nginx /api/healthz :8443]
+    H --> I[Проверить Keycloak /auth]
+    I --> J{Realm forestmap создан?}
+
+    J -- Нет --> K[Перейти к IAM Admin flow и создать realm/clients/roles]
+    J -- Да --> L[Проверить OIDC discovery]
+    L --> M[Проверить защищённый API без токена -> 401]
+    M --> N[Проверить защищённый API с токеном -> 200]
+    N --> O[Сервис готов к работе]
+
+    O --> P{Проблема в процессе эксплуатации?}
+    P -- Нет --> Q[Нормальная эксплуатация]
+    P -- Да --> R[Диагностика: API / Nginx / Keycloak / DB / uploads]
+    R --> S[Исправление]
+    S --> G
+```
+## 4. Flow: IAM Admin (Keycloak Admin — настройка авторизации)
+
+### Цель
+
+Настроить Keycloak для ForestMap:
+- создать realm
+- создать роли
+- создать клиентов (drone / viewer)
+- выдать роли service account / пользователям
+- проверить токены и доступ к API
+
+### Предусловия
+
+- Keycloak запущен (`keycloak`, `keycloak-db`)
+- Nginx проксирует `/auth/`
+- Есть bootstrap admin credentials (из `.env`)
+- Backend настроен на корректные `OIDC_ISSUER` и `OIDC_JWKS_URL`
+
+### Результат
+
+- Realm `forestmap` создан
+- Созданы роли (`drone`, `viewer`, `admin`)
+- Создан M2M-клиент `forestmap-drone` (confidential + service accounts)
+- (Опционально) создан клиент для frontend/viewer
+- Токены содержат нужные claims/roles
+- Доступ к API работает согласно ролям
+
+### Диаграмма (flowchart)
+
+```mermaid
+flowchart TD
+    A[Войти в Keycloak Admin Console] --> B[Создать Realm: forestmap]
+    B --> C[Создать роли: drone, viewer, admin]
+    C --> D[Создать Client: forestmap-drone]
+    D --> E[Включить Client Authentication]
+    E --> F[Включить Service Accounts]
+    F --> G[Скопировать Client Secret]
+    G --> H[Назначить роли service account]
+    H --> I[Проверить token по client_credentials]
+    I --> J[Проверить доступ к API с токеном]
+    J --> K[Готово]
+
+    C --> L[Опционально: создать frontend client]
+    L --> M[Настроить Redirect URIs / Web Origins]
+    M --> N[Подготовить login flow (Authorization Code + PKCE)]
+```
