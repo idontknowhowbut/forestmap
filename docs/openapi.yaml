@@ -1,0 +1,738 @@
+openapi: 3.1.0
+info:
+  title: ForestMap API
+  version: 0.1.0
+  summary: API мониторинга лесных пожаров и болезней леса (MVP)
+  description: |
+    ForestMap backend API для приема телеметрии дрона, загрузки детекций и выборки детекций в GeoJSON.
+
+    ## Архитектура маршрутизации
+    - Внешний вход через Nginx: `http://<host>:8443/api/...`
+    - Nginx отрезает префикс `/api/` и проксирует в backend (`:8080`)
+    - Поэтому внутри Go-приложения пути — без `/api`
+
+    ## Авторизация
+    Защищенные методы требуют JWT Bearer token (Keycloak).
+    Поддерживаемые сценарии:
+    - **Client Credentials** (дрон / сервисные клиенты)
+    - **Authorization Code + PKCE** (будущий фронтенд)
+
+    Keycloak доступен через Nginx по префиксу `/auth`.
+
+servers:
+  - url: http://localhost:8443/api
+    description: External API via Nginx (recommended)
+  - url: http://localhost:8081
+    description: Direct API access (debug/dev, bypass Nginx)
+
+tags:
+  - name: Health
+    description: Проверка доступности сервиса
+  - name: Telemetry
+    description: Прием телеметрии дрона
+  - name: Detections
+    description: Загрузка и выборка детекций
+  - name: Auth
+    description: Keycloak / OIDC endpoints (через Nginx, proxied)
+
+paths:
+  /healthz:
+    get:
+      tags: [Health]
+      summary: Health check
+      description: Публичная проверка доступности backend-сервиса.
+      security: []
+      responses:
+        "200":
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: ok
+
+  /v1/telemetry:
+    post:
+      tags: [Telemetry]
+      summary: Загрузить пакет телеметрии
+      description: |
+        Принимает телеметрию дрона и сохраняет её в PostgreSQL/PostGIS.
+        Координаты сохраняются как `POINTZ (SRID 4326)`.
+
+        Требует JWT Bearer token.
+      security:
+        - bearerAuth: []
+        - keycloakOAuth2: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TelemetryRequest"
+            examples:
+              sample:
+                value:
+                  flight_id: "flight-2026-02-24-001"
+                  packet_id: "d332aba1-90fb-4dc0-9fbc-eade11393a48"
+                  drone_id: "drone-01"
+                  recorded_at: "2026-02-24T16:50:00Z"
+                  location:
+                    lat: 55.7522
+                    lon: 37.6156
+                    alt: 120.5
+                  camera:
+                    heading: 180
+                    pitch: -35
+                    fov: 84
+                  speed: 12.3
+                  battery: 87
+      responses:
+        "201":
+          description: Telemetry saved
+        "400":
+          $ref: "#/components/responses/TextBadRequest"
+        "401":
+          $ref: "#/components/responses/TextUnauthorized"
+        "500":
+          $ref: "#/components/responses/TextInternalError"
+
+  /v1/detections:
+    post:
+      tags: [Detections]
+      summary: Загрузить детекции (multipart + image)
+      description: |
+        Загружает изображение и JSON-метаданные с детекциями.
+        Изображение сохраняется в файловое хранилище (`UPLOAD_DIR`), данные — в БД (в транзакции).
+
+        Требует JWT Bearer token.
+
+        ### Формат multipart/form-data
+        - `image`: файл (`jpg/png`)
+        - `data`: JSON-строка со структурой `DetectionBatchRequest`
+      security:
+        - bearerAuth: []
+        - keycloakOAuth2: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [image, data]
+              properties:
+                image:
+                  type: string
+                  format: binary
+                  description: Изображение от дрона
+                data:
+                  type: string
+                  description: JSON-строка с метаданными и массивом детекций
+                  example: |
+                    {
+                      "flight_id":"flight-2026-02-24-001",
+                      "telemetry_packet_id":"d332aba1-90fb-4dc0-9fbc-eade11393a48",
+                      "detected_at":"2026-02-24T16:50:03Z",
+                      "objects":[
+                        {
+                          "class":"fire",
+                          "score":0.98,
+                          "severity":0.80,
+                          "geometry_geo":{
+                            "type":"Polygon",
+                            "coordinates":[[[37.6155,55.7521],[37.6157,55.7521],[37.6157,55.7523],[37.6155,55.7523],[37.6155,55.7521]]]
+                          },
+                          "geometry_image":{"x":120,"y":200,"w":80,"h":65}
+                        }
+                      ]
+                    }
+      responses:
+        "201":
+          description: Detections saved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: saved
+                  count:
+                    type: integer
+                    example: 1
+        "400":
+          $ref: "#/components/responses/TextBadRequest"
+        "401":
+          $ref: "#/components/responses/TextUnauthorized"
+        "500":
+          $ref: "#/components/responses/TextInternalError"
+
+  /v1/detections:query:
+    post:
+      tags: [Detections]
+      summary: Запросить детекции в формате GeoJSON
+      description: |
+        Возвращает `GeoJSON FeatureCollection` с детекциями (универсально для пожаров / болезней).
+
+        Поддерживает фильтры:
+        - по классам (`classes`)
+        - по полету (`flight_id`)
+        - по минимальному score (`min_score`)
+        - по времени (`since`)
+        - по области (`bbox` / `aoi`)
+        - режим геометрии (`geom`): `auto | point | polygon`
+
+        ### Логика `geom=auto` (текущая)
+        - `fire` → точка (`PointOnSurface`)
+        - другие классы (например `disease`) → полигон
+
+        Требует JWT Bearer token.
+      security:
+        - bearerAuth: []
+        - keycloakOAuth2: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DetectionsQueryRequest"
+            examples:
+              basic:
+                summary: Базовый запрос
+                value:
+                  classes: ["fire", "disease"]
+                  geom: auto
+                  limit: 50
+              bboxFilter:
+                summary: Фильтр по bbox
+                value:
+                  classes: ["fire"]
+                  geom: point
+                  bbox: [37.5, 55.7, 37.8, 55.9]
+                  limit: 100
+              aoiFilter:
+                summary: Фильтр по AOI (GeoJSON geometry)
+                value:
+                  classes: ["disease"]
+                  geom: polygon
+                  aoi:
+                    type: Polygon
+                    coordinates:
+                      - - [37.60, 55.75]
+                        - [37.70, 55.75]
+                        - [37.70, 55.80]
+                        - [37.60, 55.80]
+                        - [37.60, 55.75]
+                  limit: 200
+      responses:
+        "200":
+          description: GeoJSON FeatureCollection
+          content:
+            application/geo+json:
+              schema:
+                $ref: "#/components/schemas/GeoJSONFeatureCollection"
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeoJSONFeatureCollection"
+        "400":
+          description: Invalid query payload
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  invalidGeom:
+                    value: Invalid geom (auto|point|polygon)
+                  invalidBBox:
+                    value: Invalid bbox (need 4 numbers)
+                  invalidAOI:
+                    value: Invalid aoi (must be valid GeoJSON geometry)
+        "401":
+          $ref: "#/components/responses/TextUnauthorized"
+        "500":
+          $ref: "#/components/responses/TextInternalError"
+
+  /auth/realms/{realm}/.well-known/openid-configuration:
+    get:
+      tags: [Auth]
+      summary: OIDC Discovery (Keycloak)
+      description: |
+        OIDC discovery endpoint Keycloak (через Nginx).
+        Используется клиентами/интеграциями для получения issuer, token endpoint, jwks_uri и т.д.
+      security: []
+      servers:
+        - url: http://localhost:8443
+          description: Nginx gateway root
+        - url: http://localhost:18080
+          description: Direct Keycloak (local host only, if port is exposed)
+      parameters:
+        - name: realm
+          in: path
+          required: true
+          schema:
+            type: string
+            example: forestmap
+      responses:
+        "200":
+          description: OIDC discovery document
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "404":
+          description: Realm does not exist
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Realm does not exist
+
+  /auth/realms/{realm}/protocol/openid-connect/token:
+    post:
+      tags: [Auth]
+      summary: Получить access token (Keycloak)
+      description: |
+        Token endpoint Keycloak.
+
+        ### Способ 1: Client Credentials (рекомендуется для дрона/сервисов)
+        `grant_type=client_credentials`
+
+        ### Способ 2: Authorization Code + PKCE (будущий фронтенд)
+        Используется в браузерном приложении через redirect flow.
+
+        > Важно: сам Keycloak является отдельным сервисом. Этот endpoint проксируется через Nginx.
+      security: []
+      servers:
+        - url: http://localhost:8443
+          description: Nginx gateway root
+        - url: http://localhost:18080
+          description: Direct Keycloak (local host only, if port is exposed)
+      parameters:
+        - name: realm
+          in: path
+          required: true
+          schema:
+            type: string
+            example: forestmap
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              oneOf:
+                - type: object
+                  required: [grant_type, client_id, client_secret]
+                  properties:
+                    grant_type:
+                      type: string
+                      enum: [client_credentials]
+                    client_id:
+                      type: string
+                      example: forestmap-drone
+                    client_secret:
+                      type: string
+                      example: "<client-secret>"
+                - type: object
+                  required: [grant_type, client_id, code, redirect_uri]
+                  properties:
+                    grant_type:
+                      type: string
+                      enum: [authorization_code]
+                    client_id:
+                      type: string
+                      example: forestmap-frontend
+                    code:
+                      type: string
+                    redirect_uri:
+                      type: string
+                      format: uri
+                    code_verifier:
+                      type: string
+                      description: PKCE code verifier
+      responses:
+        "200":
+          description: Token response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OAuthTokenResponse"
+        "400":
+          description: Invalid token request
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "401":
+          description: Invalid client credentials
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT access token от Keycloak.
+        Передается в заголовке: `Authorization: Bearer <token>`
+
+    keycloakOAuth2:
+      type: oauth2
+      description: |
+        Keycloak OAuth2/OpenID Connect.
+        Для сервисов (дрон/бот) используйте flow `clientCredentials`.
+        Для фронтенда (в будущем) — `authorizationCode` + PKCE.
+      flows:
+        clientCredentials:
+          tokenUrl: http://localhost:8443/auth/realms/forestmap/protocol/openid-connect/token
+          scopes: {}
+        authorizationCode:
+          authorizationUrl: http://localhost:8443/auth/realms/forestmap/protocol/openid-connect/auth
+          tokenUrl: http://localhost:8443/auth/realms/forestmap/protocol/openid-connect/token
+          scopes:
+            openid: OpenID Connect scope
+            profile: Basic profile
+            email: Email (optional)
+
+  responses:
+    TextBadRequest:
+      description: Bad request
+      content:
+        text/plain:
+          schema:
+            type: string
+            example: Invalid JSON
+    TextUnauthorized:
+      description: Unauthorized
+      content:
+        text/plain:
+          schema:
+            type: string
+            example: Unauthorized
+    TextInternalError:
+      description: Internal server error
+      content:
+        text/plain:
+          schema:
+            type: string
+            example: Internal Server Error
+
+  schemas:
+    TelemetryRequest:
+      type: object
+      required:
+        - flight_id
+        - packet_id
+        - drone_id
+        - recorded_at
+        - location
+        - camera
+      properties:
+        flight_id:
+          type: string
+          example: flight-2026-02-24-001
+        packet_id:
+          type: string
+          format: uuid
+          example: d332aba1-90fb-4dc0-9fbc-eade11393a48
+        drone_id:
+          type: string
+          example: drone-01
+        recorded_at:
+          type: string
+          format: date-time
+        location:
+          $ref: "#/components/schemas/GeoLocation"
+        camera:
+          $ref: "#/components/schemas/CameraSettings"
+        speed:
+          type: number
+          format: double
+          example: 12.3
+        battery:
+          type: integer
+          example: 87
+
+    GeoLocation:
+      type: object
+      required: [lat, lon, alt]
+      properties:
+        lat:
+          type: number
+          format: double
+          example: 55.7522
+        lon:
+          type: number
+          format: double
+          example: 37.6156
+        alt:
+          type: number
+          format: double
+          example: 120.5
+
+    CameraSettings:
+      type: object
+      required: [heading, pitch, fov]
+      properties:
+        heading:
+          type: number
+          format: double
+          example: 180
+        pitch:
+          type: number
+          format: double
+          example: -35
+        fov:
+          type: number
+          format: double
+          example: 84
+
+    DetectionBatchRequest:
+      type: object
+      required: [flight_id, telemetry_packet_id, detected_at, objects]
+      properties:
+        flight_id:
+          type: string
+        telemetry_packet_id:
+          type: string
+          format: uuid
+        detected_at:
+          type: string
+          format: date-time
+        objects:
+          type: array
+          items:
+            $ref: "#/components/schemas/DetectionObject"
+
+    DetectionObject:
+      type: object
+      required: [class, score, severity, geometry_geo, geometry_image]
+      properties:
+        class:
+          type: string
+          example: fire
+        score:
+          type: number
+          format: double
+          example: 0.98
+        severity:
+          type: number
+          format: double
+          example: 0.8
+        geometry_geo:
+          $ref: "#/components/schemas/GeoJSONPolygon"
+        geometry_image:
+          $ref: "#/components/schemas/Box"
+
+    Box:
+      type: object
+      required: [x, y, w, h]
+      properties:
+        x:
+          type: number
+          format: double
+        y:
+          type: number
+          format: double
+        w:
+          type: number
+          format: double
+        h:
+          type: number
+          format: double
+
+    GeoJSONPolygon:
+      type: object
+      required: [type, coordinates]
+      properties:
+        type:
+          type: string
+          enum: [Polygon]
+        coordinates:
+          type: array
+          description: GeoJSON Polygon coordinates [ [ [lon,lat], ... ] ]
+          items:
+            type: array
+            items:
+              type: array
+              minItems: 2
+              maxItems: 2
+              items:
+                type: number
+
+    DetectionsQueryRequest:
+      type: object
+      description: Фильтры выборки детекций
+      properties:
+        classes:
+          type: array
+          items:
+            type: string
+          example: [fire, disease]
+        flight_id:
+          type: string
+          example: flight-2026-02-24-001
+        min_score:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          example: 0.7
+        since:
+          type: string
+          format: date-time
+          example: "2026-02-24T00:00:00Z"
+        bbox:
+          type: array
+          minItems: 4
+          maxItems: 4
+          description: "[minLon, minLat, maxLon, maxLat] в SRID 4326"
+          items:
+            type: number
+          example: [37.5, 55.7, 37.8, 55.9]
+        aoi:
+          type: object
+          description: GeoJSON Geometry (Polygon / MultiPolygon / etc.)
+          additionalProperties: true
+          example:
+            type: Polygon
+            coordinates:
+              - - [37.60, 55.75]
+                - [37.70, 55.75]
+                - [37.70, 55.80]
+                - [37.60, 55.80]
+                - [37.60, 55.75]
+        geom:
+          type: string
+          enum: [auto, point, polygon]
+          default: auto
+          description: Режим геометрии в ответе
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 5000
+          default: 2000
+      additionalProperties: false
+
+    GeoJSONFeatureCollection:
+      type: object
+      required: [type, features]
+      properties:
+        type:
+          type: string
+          enum: [FeatureCollection]
+        features:
+          type: array
+          items:
+            $ref: "#/components/schemas/GeoJSONFeature"
+
+    GeoJSONFeature:
+      type: object
+      required: [type, geometry, properties]
+      properties:
+        type:
+          type: string
+          enum: [Feature]
+        id:
+          oneOf:
+            - type: string
+            - type: integer
+            - type: "null"
+        geometry:
+          oneOf:
+            - $ref: "#/components/schemas/GeoJSONPoint"
+            - $ref: "#/components/schemas/GeoJSONPolygon"
+            - type: object
+              additionalProperties: true
+              description: Другой GeoJSON geometry type (на будущее)
+        properties:
+          type: object
+          required:
+            - flight_id
+            - detected_at
+            - class_type
+          properties:
+            flight_id:
+              type: string
+            detected_at:
+              type: string
+              format: date-time
+            class_type:
+              type: string
+              example: fire
+            score:
+              type:
+                - number
+                - "null"
+            severity:
+              type:
+                - number
+                - "null"
+            image_path:
+              type:
+                - string
+                - "null"
+              example: /uploads/1771596434_1770214739_test.jpg
+            geometry_image:
+              type:
+                - object
+                - "null"
+              additionalProperties: true
+            telemetry_packet_id:
+              type:
+                - string
+                - "null"
+              format: uuid
+          additionalProperties: true
+
+    GeoJSONPoint:
+      type: object
+      required: [type, coordinates]
+      properties:
+        type:
+          type: string
+          enum: [Point]
+        coordinates:
+          type: array
+          minItems: 2
+          maxItems: 3
+          items:
+            type: number
+          example: [37.6156, 55.7522]
+
+    OAuthTokenResponse:
+      type: object
+      required: [access_token, token_type]
+      properties:
+        access_token:
+          type: string
+          description: JWT access token
+        expires_in:
+          type: integer
+          example: 300
+        refresh_expires_in:
+          type: integer
+          example: 1800
+        refresh_token:
+          type: string
+        token_type:
+          type: string
+          example: Bearer
+        not-before-policy:
+          type: integer
+        session_state:
+          type: string
+        scope:
+          type: string
+          example: "openid profile email"
+
+security:
+  - bearerAuth: []
