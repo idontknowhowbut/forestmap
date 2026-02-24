@@ -1,0 +1,79 @@
+services:
+  api:
+    build:
+      context: ../backend
+    ports:
+      - "8081:8080"
+    environment:
+      - ADDR=:8080
+      - DATABASE_URL=postgres://forest:forest_pass@db:5432/forestmap?sslmode=disable
+      - OIDC_ISSUER=http://localhost:8443/auth/realms/forestmap
+      - OIDC_JWKS_URL=http://keycloak:8080/auth/realms/forestmap/protocol/openid-connect/certs
+    depends_on:
+      - db
+    restart: unless-stopped
+    volumes:
+      - uploads_data:/uploads
+
+  frontend:
+    build:
+      context: ../frontend
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1.28-alpine
+    ports:
+      - "8443:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - uploads_data:/uploads:ro
+    depends_on:
+      - api
+      - frontend
+    restart: unless-stopped
+
+  db:
+    image: postgis/postgis:16-3.4-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: forest
+      POSTGRES_PASSWORD: forest_pass
+      POSTGRES_DB: forestmap
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  keycloak-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: keycloak_pass
+    volumes:
+      - keycloak_pgdata:/var/lib/postgresql/data
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.5.4
+    restart: unless-stopped
+    depends_on:
+      - keycloak-db
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloak_pass
+    command: 
+      - start-dev
+      - --proxy-headers=xforwarded
+      - --http-relative-path=/auth
+      - --hostname=http://localhost:8443/auth
+    ports:
+      - "127.0.0.1:18080:8080"
+
+volumes:
+  postgres_data:
+  uploads_data:
+  keycloak_pgdata:
