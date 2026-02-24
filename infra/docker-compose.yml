@@ -63,7 +63,7 @@ services:
     depends_on:
       - keycloak-db
     environment:
-      # Bootstrap admin (важно при первом запуске / новом volume)
+      # Bootstrap admin
       KEYCLOAK_ADMIN: "${KEYCLOAK_ADMIN:-admin}"
       KEYCLOAK_ADMIN_PASSWORD: "${KEYCLOAK_ADMIN_PASSWORD}"
 
