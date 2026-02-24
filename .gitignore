@@ -26,7 +26,18 @@ frontend/dist/
 *.7z
 *.tar.gz
 
-# Env / secrets
-.env
-.env.*
-!.env.example
+# Secrets / local env
+infra/.env
+*.env.local
+*.secrets
+
+# TLS / keys
+*.pem
+*.key
+*.crt
+
+# Runtime uploads
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+
