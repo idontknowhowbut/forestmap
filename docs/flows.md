@@ -196,19 +196,21 @@ flowchart TD
 
 ### Диаграмма (flowchart)
 
+### Диаграмма (flowchart)
+
 ```mermaid
 flowchart TD
-    A[Войти в Keycloak Admin Console] --> B[Создать Realm: forestmap]
-    B --> C[Создать роли: drone, viewer, admin]
-    C --> D[Создать Client: forestmap-drone]
-    D --> E[Включить Client Authentication]
-    E --> F[Включить Service Accounts]
-    F --> G[Скопировать Client Secret]
-    G --> H[Назначить роли service account]
-    H --> I[Проверить token по client_credentials]
-    I --> J[Проверить доступ к API с токеном]
-    J --> K[Готово]
+    A["Войти в Keycloak Admin Console"] --> B["Создать Realm: forestmap"]
+    B --> C["Создать роли: drone, viewer, admin"]
+    C --> D["Создать Client: forestmap-drone"]
+    D --> E["Включить Client Authentication"]
+    E --> F["Включить Service Accounts"]
+    F --> G["Скопировать Client Secret"]
+    G --> H["Назначить роли service account"]
+    H --> I["Проверить token по client_credentials"]
+    I --> J["Проверить доступ к API с токеном"]
+    J --> K["Готово"]
 
-    C --> L[Опционально: создать frontend client]
-    L --> M[Настроить Redirect URIs / Web Origins]
-    M --> N[Подготовить login flow (Authorization Code + PKCE)]
+    C --> L["Опционально: создать frontend client"]
+    L --> M["Настроить Redirect URIs и Web Origins"]
+    M --> N["Подготовить login flow: Authorization Code with PKCE"]
