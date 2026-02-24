@@ -212,4 +212,4 @@ flowchart TD
     C --> L[Опционально: создать frontend client]
     L --> M[Настроить Redirect URIs / Web Origins]
     M --> N[Подготовить login flow (Authorization Code + PKCE)]
-```
+
