@@ -95,9 +95,6 @@ docs/
   flows/flows.md
   erd/logical-erd.md
 ```
-
-> Рекомендуется не коммитить `node_modules`, собранные бинарники и локальные `uploads`.
-
 ---
 
 ## Быстрый старт
