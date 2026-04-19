@@ -2,13 +2,12 @@ package main
 
 import (
 	"context"
-	"database/sql"
+	"github.com/jmoiron/sqlx"
+    _ "github.com/lib/pq"
 	"log"
 	"net/http"
 	"os"
 	"time"
-
-	_ "github.com/lib/pq"
 
 	"forestmap/backend/internal/httpapi"
 	"forestmap/backend/internal/store"
@@ -22,7 +21,7 @@ func main() {
 		log.Fatal("DATABASE_URL is not set")
 	}
 
-	db, err := sql.Open("postgres", dbURL)
+	db, err := sqlx.Open("postgres", dbURL)
 	if err != nil {
 		log.Fatalf("failed to open db: %v", err)
 	}
