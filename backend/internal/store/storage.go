@@ -2,20 +2,21 @@ package store
 
 import (
 	"forestmap/backend/internal/model"
-	"database/sql"
+	"github.com/jmoiron/sqlx"
 	"encoding/json"
 	"fmt"
   "context"
 	"strconv"
 	"strings"
 	"github.com/lib/pq"
+	
 )
 
 type Store struct {
-	db *sql.DB
+	db *sqlx.DB
 }
 
-func NewStore(db *sql.DB) *Store {
+func NewStore(db *sqlx.DB) *Store {
 	return &Store{db: db}
 }
 
