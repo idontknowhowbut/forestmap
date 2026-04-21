@@ -1,20 +1,48 @@
-/* Сохраняем все существующие стили */
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  --bg-main: #12121a;
+  --bg-panel: #1c1c26;
+  --bg-panel-2: #191922;
+  --bg-control: #25262f;
+  --border: #333;
+  --text-main: #f3f4f6;
+  --text-muted: #9ca3af;
+  --text-dim: #7a7e84;
+  --text-label: #888;
+  --accent: #aa3bff;
+  --danger: #ef4444;
+}
+
 .app {
-  height: 100vh;
+  height: 100%;
   display: flex;
   flex-direction: column;
   font-family: sans-serif;
+  background: var(--bg-main);
 }
+
+/* Top bar */
 
 .top-bar {
   height: 50px;
-  background: #12121A;
-  color: #f3f4f6;
+  background: var(--bg-main);
+  color: var(--text-main);
   display: flex;
   align-items: stretch;
   justify-content: space-between;
   padding: 0;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
 }
 
 .top-bar-left {
@@ -33,10 +61,11 @@
   user-select: none;
 }
 
-.top-nav-item:hover, .top-nav-item.active {
-  background: #1C1C26;
+.top-nav-item:hover,
+.top-nav-item.active {
+  background: var(--bg-panel);
   color: #fff;
-  border-bottom: 2px solid #aa3bff;
+  border-bottom-color: var(--accent);
 }
 
 .top-bar-right {
@@ -56,15 +85,16 @@
 }
 
 .user-profile:hover {
-  background: #1C1C26;
+  background: var(--bg-panel);
 }
 
 .user-name {
   font-size: 14px;
-  color: #9ca3af;
+  color: var(--text-muted);
 }
 
-.theme-toggle, .logout-btn {
+.theme-toggle,
+.logout-btn {
   width: 36px;
   height: 36px;
   display: flex;
@@ -74,32 +104,37 @@
   cursor: pointer;
   background: transparent;
   border: none;
-  color: #9ca3af;
+  color: var(--text-muted);
   transition: 0.2s;
 }
 
-.theme-toggle:hover, .logout-btn:hover {
-  background: #1C1C26;
+.theme-toggle:hover,
+.logout-btn:hover {
+  background: var(--bg-panel);
   color: #fff;
 }
 
 .logout-btn:hover {
-  color: #ef4444;
+  color: var(--danger);
 }
+
+/* Main layout */
 
 .layout {
   flex: 1;
+  min-height: 0;
   display: flex;
   overflow: hidden;
 }
 
 .sidebar {
   width: 300px;
-  background: #1C1C26;
+  background: var(--bg-panel);
   color: white;
   display: flex;
   flex-direction: column;
   text-align: left;
+  flex-shrink: 0;
 }
 
 .sidebar-static {
@@ -107,25 +142,24 @@
   flex-direction: column;
   gap: 12px;
   padding: 16px;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid var(--border);
 }
 
 .sidebar-section {
   display: flex;
   flex-direction: column;
   gap: 6px;
-
 }
 
 .sidebar-section label {
   font-size: 12px;
-  color: #888;
+  color: var(--text-label);
 }
 
 .ui-element {
-  background: #25262F;
+  background: var(--bg-control);
   color: white;
-  border: 1px solid #333;
+  border: 1px solid var(--border);
   padding: 8px;
   border-radius: 4px;
   outline: none;
@@ -151,8 +185,8 @@
 }
 
 .sidebar-icon-btn {
-  background: #1C1C26;
-  border: 0px solid #333;
+  background: var(--bg-panel);
+  border: 0;
   border-radius: 10px;
   padding: 10px 10px 2px;
   flex: 1;
@@ -161,8 +195,7 @@
   align-items: center;
   gap: 4px;
   cursor: pointer;
-  color: #9ca3af;
-  margin: 0 0px;
+  color: var(--text-muted);
 }
 
 .sidebar-icon-btn:hover {
@@ -183,34 +216,20 @@
   font-size: 14px;
   font-weight: 600;
   color: #aaa;
-  border-bottom: 1px solid #333;
-  background: #191922;
-}
-
-.add-det-btn {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  border: none;
-  background: #aa3bff;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 18px;
-  line-height: 1;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-panel-2);
 }
 
 .sidebar-scroll {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 12px;
 }
 
 .scroll-item {
   padding: 8px 2px;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid var(--border);
   font-size: 12px;
   border-radius: 4px;
   margin-bottom: 4px;
@@ -218,21 +237,145 @@
 }
 
 .scroll-item:hover {
-  background: #25262F;
+  background: var(--bg-control);
   cursor: pointer;
 }
 
-/* --- ОБНОВЛЕННЫЙ КОНТЕНТ С КООРДИНАТАМИ --- */
-.content {
-  flex: 1;
-  background: #4A4A4A;
-  position: relative; /* Для позиционирования полоски */
-  padding: 0;
-  overflow: hidden;
+/* Sidebar utility rows */
+
+.sidebar-label-row {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 8px;
+  margin-bottom: 4px;
 }
+
+.sidebar-label-row label {
+  margin: 0;
+  cursor: default;
+  font-size: 16px;
+}
+
+/* Refresh button */
+
+.refresh-btn-active {
+  background: transparent;
+  cursor: pointer;
+  padding: 3px;
+  transition: transform 0.3s ease, filter 0.2s ease;
+  display: flex;
+  align-items: center;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.refresh-btn-active:hover {
+  filter: brightness(1.2);
+  background: var(--bg-control);
+  border-color: var(--accent);
+}
+
+.refresh-btn-active:active {
+  transform: scale(0.9);
+}
+
+/* Date range */
+
+.date-range-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.date-range-group .ui-element {
+  flex: 1;
+  font-size: 11px;
+}
+
+.date-separator {
+  color: var(--text-label);
+  font-size: 12px;
+}
+
+/* Double range slider */
+
+.double-range-slider {
+  position: relative;
+  width: 100%;
+  height: 24px;
+  display: flex;
+  align-items: center;
+}
+
+.slider-track-base {
+  position: absolute;
+  width: 100%;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  z-index: 1;
+}
+
+.slider-track-fill {
+  position: absolute;
+  height: 4px;
+  background: var(--accent);
+  border-radius: 2px;
+  z-index: 2;
+}
+
+.double-range-slider input[type='range'] {
+  position: absolute;
+  width: 100%;
+  margin: 0;
+  background: none;
+  appearance: none;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.double-range-slider input[type='range']::-webkit-slider-thumb {
+  appearance: none;
+  pointer-events: auto;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid #fff;
+  cursor: pointer;
+}
+
+.double-range-slider input[type='range']::-moz-range-thumb {
+  pointer-events: auto;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid #fff;
+  cursor: pointer;
+}
+
+/* Main map/content */
+
+.content {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.leaflet-map,
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+}
+
+.leaflet-container {
+  background: #dbe7d3;
+  z-index: 1;
+}
+
+/* Overlays on map */
 
 .coords-overlay {
   position: absolute;
@@ -245,12 +388,12 @@
   border-radius: 30px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: #fff;
-  font-family: var(--mono, monospace);
+  font-family: monospace;
   font-size: 13px;
-  z-index: 100;
+  z-index: 1000;
   display: flex;
   gap: 12px;
-  pointer-events: none; /* Чтобы не мешать кликам по карте */
+  pointer-events: none;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
 }
 
@@ -258,144 +401,6 @@
   color: rgba(255, 255, 255, 0.2);
 }
 
-.map-placeholder {
-  color: #666;
-  font-size: 20px;
-}
-
-
-/* Изменено для размещения иконок */
-.bottom-bar {
-  height: 80px;
-  background: #12121A;
-  color: #445469; /* Добавлена # */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 16px;
-  gap: 24px; /* Расстояние между иконками */
-   height: 80px;
-  background: #12121A;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 60px;
-
-}
-
-.bottom-icon {
-  font-size: 24px;
-  cursor: pointer;
-  transition: transform 0.2s;
-  width: 28px;
-  height: 28px;
-  opacity: 0.5;
-  transition: opacity 0.2s ease
-}
-
-.bottom-icon:hover {
-  transform: scale(1.1);
-  opacity: 1
-}
-
-.bottom-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0px;
-}
-
-.bottom-label {
-  font-size: 12px;
-  color: #7A7E84;
-}
-
-/* Двойной слайдер */
-/* --- СЛАЙДЕР: ТЕПЕРЬ ТОЧНО ОДИН ВИЗУАЛЬНО --- */
-.double-range-slider {
-  position: relative;
-  width: 100%;
-  height: 24px;
-  display: flex;
-  align-items: center;
-}
-
-/* Общая дорожка (фон) */
-.slider-track-base {
-  position: absolute;
-  width: 100%;
-  height: 4px;
-  background: #333;
-  border-radius: 2px;
-  z-index: 1;
-}
-
-.double-range-slider input[type="range"] {
-  position: absolute;
-  width: 100%;
-  background: none; /* УБИРАЕМ СТАНДАРТНУЮ ПОЛОСКУ ИЗ ВСЕХ БРАУЗЕРОВ */
-  appearance: none;
-  pointer-events: none; /* Чтобы инпут не перекрывал клики */
-  margin: 0;
-  z-index: 2;
-}
-
-/* Стилизуем только сам ползунок («кругляшок») */
-.double-range-slider input[type="range"]::-webkit-slider-thumb {
-  appearance: none;
-  pointer-events: auto; /* ВОЗВРАЩАЕМ КЛИКИ ТОЛЬКО ПОЛЗУНКУ */
-  height: 16px;
-  width: 16px;
-  border-radius: 50%;
-  background: #aa3bff;
-  cursor: pointer;
-  border: 2px solid #fff;
-}
-
-/* Аналог для Firefox */
-.double-range-slider input[type="range"]::-moz-range-thumb {
-  pointer-events: auto;
-  height: 16px;
-  width: 16px;
-  border-radius: 50%;
-  background: #aa3bff;
-  cursor: pointer;
-  border: 2px solid #fff;
-}
-
-.date-range-group {
-  display: flex;
-  gap: 8px;
-}
-
-.date-range-group .ui-element {
-  flex: 1;
-  font-size: 11px;
-}
-
-/* Кнопка обновления в сайдбаре */
-.label-with-refresh {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.refresh-btn {
-  background: transparent;
-  border: none;
-  color: #888;
-  font-size: 18px;
-  cursor: pointer;
-  transition: 0.2s;
-  line-height: 1;
-}
-
-.refresh-btn:hover {
-  color: var(--accent);
-  transform: rotate(45deg); /* Легкий визуальный эффект при наведении */
-}
-
-/* Кнопки масштабирования на карте */
 .zoom-controls {
   position: absolute;
   right: 20px;
@@ -404,7 +409,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  z-index: 100;
+  z-index: 1000;
 }
 
 .zoom-btn {
@@ -426,78 +431,46 @@
 }
 
 .zoom-btn:hover {
-  background: #25262F;
+  background: var(--bg-control);
   border-color: var(--accent);
   color: var(--accent);
 }
 
-/* Фикс для контента, чтобы зум не съезжал */
-.content {
-  position: relative;
-}
+/* Bottom bar */
 
-/* Контейнер для надписи и кнопки */
-.sidebar-label-row {
-  display: flex;
-  align-items: center; /* Центрируем по вертикали относительно текста */
-  gap: 8px;            /* Отступ между текстом и кнопкой */
-  margin-bottom: 4px;  /* Небольшой отступ до дропдауна */
-}
-
-/* Сама кнопка: яркая и заметная */
-.refresh-btn-active {
-  background: transparent;
-  cursor: pointer;
-  padding: 3;
-  transition: transform 0.3s ease, filter 0.2s ease;
+.bottom-bar {
+  height: 80px;
+  background: var(--bg-main);
+  color: #445469;
   display: flex;
   align-items: center;
-    border-radius: 8px;
- border: 1px solid rgba(255, 255, 255, 0.1);
+  justify-content: center;
+  gap: 60px;
+  padding: 0 16px;
+  flex-shrink: 0;
 }
 
-/* Эффект при наведении */
-.refresh-btn-active:hover {
-  filter: brightness(1.2);    /* Становится еще ярче */
-  background: #25262F;
+.bottom-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+.bottom-icon {
+  width: 28px;
+  height: 28px;
+  opacity: 0.5;
   cursor: pointer;
-  border-radius: 8px;
-  border-color: var(--accent);
-  color: var(--accent)
+  transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
-/* Эффект при клике */
-.refresh-btn-active:active {
-  transform: scale(0.9);
+.bottom-icon:hover {
+  transform: scale(1.1);
+  opacity: 1;
 }
 
-/* Убедись, что стандартный label в этой строке не имеет лишних отступов */
-.sidebar-label-row label {
-  margin: 0; 
-  cursor: default;
-  font-size: 16px;
-}
-
-/* Базовая серая подложка (уже есть, проверь свойства) */
-.slider-track-base {
-  position: absolute;
-  width: 100%;
-  height: 4px;
-  background: #333;
-  border-radius: 2px;
-  z-index: 1;
-}
-
-/* Активная фиолетовая полоска */
-.slider-track-fill {
-  position: absolute;
-  height: 4px;
-  background: #aa3bff; /* Твой основной фиолетовый */
-  border-radius: 2px;
-  z-index: 2; /* Выше базы, но ниже ползунков */
-}
-
-/* Сами инпуты поднимаем еще выше, чтобы ползунки были доступны */
-.double-range-slider input[type="range"] {
-  z-index: 3;
+.bottom-label {
+  font-size: 12px;
+  color: var(--text-dim);
 }

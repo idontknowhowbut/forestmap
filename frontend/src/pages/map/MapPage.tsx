@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import '../../App.css';
 
 import distanceIcon from '../../distanceicon.png';
@@ -16,27 +16,26 @@ import refreshIcon from '../../refreshicon.png';
 import adddetIcon from '../../adddetectionicon.png';
 
 import { searchDetections } from '../../features/detections-search/api';
-import type { DetectionSummary } from '../../entities/detection/types';
+import type { BBox, DetectionSummary } from '../../entities/detection/types';
+import { MapView } from '../../widgets/map-view/MapView';
 
 export function MapPage() {
   const [items, setItems] = useState<DetectionSummary[]>([]);
   const [rangeMin, setRangeMin] = useState(5);
   const [rangeMax, setRangeMax] = useState(10);
   const [coords, setCoords] = useState({ lat: 60.1234, lng: 30.5678 });
+  const [selectedDetectionId, setSelectedDetectionId] = useState<string | null>(null);
+  const [bbox, setBbox] = useState<BBox>({
+    minLon: 30.1,
+    minLat: 60.0,
+    maxLon: 30.9,
+    maxLat: 60.5,
+  });
 
-  useEffect(() => {
-    void loadDetections();
-  }, []);
-
-  async function loadDetections() {
+  async function loadDetections(currentBbox: BBox = bbox) {
     const result = await searchDetections({
       map: {
-        bbox: {
-          minLon: 30.1,
-          minLat: 60.0,
-          maxLon: 30.9,
-          maxLat: 60.5,
-        },
+        bbox: currentBbox,
         geometryMode: 'simplified',
       },
       filters: {
@@ -56,20 +55,37 @@ export function MapPage() {
       },
     });
 
-    console.log('detections result', result);
+    console.log('search with bbox', currentBbox);
     setItems(result.data);
   }
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+  useEffect(() => {
+    void loadDetections(bbox);
+  }, [bbox, rangeMin, rangeMax]);
 
-    const lat = 60.5 - (y / rect.height) * 0.5;
-    const lng = 30.1 + (x / rect.width) * 0.8;
+  const handleBoundsChange = useCallback((nextBbox: BBox) => {
+    setBbox((prev) => {
+      const isSame =
+        prev.minLon === nextBbox.minLon &&
+        prev.minLat === nextBbox.minLat &&
+        prev.maxLon === nextBbox.maxLon &&
+        prev.maxLat === nextBbox.maxLat;
 
-    setCoords({ lat, lng });
-  };
+      if (isSame) {
+        return prev;
+      }
+
+      console.log('bbox changed', nextBbox);
+      return nextBbox;
+    });
+  }, []);
+
+  const handleMouseCoordsChange = useCallback(
+    (nextCoords: { lat: number; lng: number }) => {
+      setCoords(nextCoords);
+    },
+    [],
+  );
 
   return (
     <div className="app">
@@ -181,7 +197,7 @@ export function MapPage() {
           </div>
         </aside>
 
-        <main className="content" onMouseMove={handleMouseMove}>
+        <main className="content">
           <div className="coords-overlay">
             <span className="coord-val">{coords.lat.toFixed(6)} N</span>
             <span className="coord-sep">|</span>
@@ -193,7 +209,13 @@ export function MapPage() {
             <button className="zoom-btn">−</button>
           </div>
 
-          <div className="map-placeholder">Карта будет здесь</div>
+          <MapView
+            items={items}
+            selectedDetectionId={selectedDetectionId}
+            onSelectDetection={setSelectedDetectionId}
+            onBoundsChange={handleBoundsChange}
+            onMouseCoordsChange={handleMouseCoordsChange}
+          />
         </main>
       </div>
 
