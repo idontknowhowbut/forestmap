@@ -69,25 +69,25 @@ async function mockSearchDetections(): Promise<DetectionSearchResponse> {
         description: 'Моковый multipolygon',
         lastDetectionAt: '2026-04-19T12:30:00Z',
         centroid: {
-          lat: 60.135,
-          lon: 30.61,
+          lat: 60.30,
+          lon: 30.90,
         },
         geometry: {
           type: 'MultiPolygon',
           coordinates: [
             [[
-              [30.60, 60.13],
-              [30.62, 60.13],
-              [30.62, 60.145],
-              [30.60, 60.145],
-              [30.60, 60.13],
+              [30.88, 60.29],
+              [30.92, 60.29],
+              [30.92, 60.32],
+              [30.88, 60.32],
+              [30.88, 60.29],
             ]],
             [[
-              [30.63, 60.135],
-              [30.645, 60.135],
-              [30.645, 60.15],
-              [30.63, 60.15],
-              [30.63, 60.135],
+              [30.95, 60.30],
+              [30.98, 60.30],
+              [30.98, 60.33],
+              [30.95, 60.33],
+              [30.95, 60.30],
             ]],
           ],
         },
@@ -106,8 +106,8 @@ async function mockSearchDetections(): Promise<DetectionSearchResponse> {
         description: 'Без geometry, только centroid',
         lastDetectionAt: '2026-04-19T12:30:00Z',
         centroid: {
-          lat: 60.11,
-          lon: 30.53,
+          lat: 59.95,
+          lon: 30.20,
         },
         geometry: null,
         stats: {

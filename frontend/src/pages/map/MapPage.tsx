@@ -187,7 +187,11 @@ export function MapPage() {
 
           <div className="sidebar-scroll">
             {items.map((item) => (
-              <div key={item.id} className="scroll-item">
+              <div
+                key={item.id}
+                className={`scroll-item ${selectedDetectionId === item.id ? 'scroll-item-selected' : ''}`}
+                onClick={() => setSelectedDetectionId(item.id)}
+              >
                 {item.title ?? item.id}.{' '}
                 <span className="bottom-label">
                   {new Date(item.lastDetectionAt).toLocaleString()} / score {item.score}
