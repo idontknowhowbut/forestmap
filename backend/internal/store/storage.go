@@ -20,21 +20,21 @@ func NewStore(db *sqlx.DB) *Store {
 	return &Store{db: db}
 }
 
-func (s *Store) SaveTelemetry(t model.TelemetryRequest) error {
+func (s *Store) SaveTelemetry(t model.TelemetryRequest, companyID string) error {
 	query := `
 		INSERT INTO telemetry (
-			packet_id, flight_id, drone_id, recorded_at, 
+			packet_id, flight_id, drone_id, company_id, recorded_at, 
 			location, 
 			heading, pitch, fov, speed, battery
 		) VALUES (
-			$1, $2, $3, $4,
-			ST_SetSRID(ST_MakePoint($5, $6, $7), 4326),
-			$8, $9, $10, $11, $12
+			$1, $2, $3, $4, $5,
+			ST_SetSRID(ST_MakePoint($6, $7, $8), 4326),
+			$9, $10, $11, $12, $13
 		)
 	`
 
 	_, err := s.db.Exec(query,
-		t.PacketID, t.FlightID, t.DroneID, t.RecordedAt,
+		t.PacketID, t.FlightID, t.DroneID, companyID, t.RecordedAt,
 		t.Location.Lon, t.Location.Lat, t.Location.Alt,
 		t.Camera.Heading, t.Camera.Pitch, t.Camera.FOV,
 		t.Speed, t.Battery,
@@ -46,7 +46,7 @@ func (s *Store) SaveTelemetry(t model.TelemetryRequest) error {
 	return nil
 }
 
-func (s *Store) SaveDetections(batch model.DetectionBatchRequest, imagePath string) error {
+func (s *Store) SaveDetections(batch model.DetectionBatchRequest, imagePath string, companyID string) error {
 	tx, err := s.db.Begin()
 	if err != nil {
 		return err
@@ -55,14 +55,14 @@ func (s *Store) SaveDetections(batch model.DetectionBatchRequest, imagePath stri
 
 	query := `
 		INSERT INTO detections (
-			flight_id, telemetry_packet_id, detected_at,
+			company_id, flight_id, telemetry_packet_id, detected_at,
 			class_type, score, severity,
 			geometry_geo, geometry_image, image_path
 		) VALUES (
-			$1, $2, $3,
-			$4, $5, $6,
-			ST_SetSRID(ST_GeomFromGeoJSON($7), 4326), 
-			$8, $9
+			$1, $2, $3, $4, 
+			$5, $6, $7,
+			ST_SetSRID(ST_GeomFromGeoJSON($8), 4326), 
+			$9, $10
 		)
 	`
 
@@ -78,7 +78,7 @@ func (s *Store) SaveDetections(batch model.DetectionBatchRequest, imagePath stri
 		}
 
 		_, err = tx.Exec(query,
-			batch.FlightID, batch.TelemetryPacketID, batch.DetectedAt,
+			companyID, batch.FlightID, batch.TelemetryPacketID, batch.DetectedAt,
 			obj.Class, obj.Score, obj.Severity,
 			string(geoBytes),
 			boxBytes,
