@@ -21,6 +21,7 @@ type KeycloakClaims struct {
 	RealmAccess struct {
 		Roles []string `json:"roles"`
 	} `json:"realm_access"`
+	CompanyID string `json:"company_id"`
 }
 
 func NewJWTAuth(ctx context.Context, issuer, jwksURL string) (*JWTAuth, error) {
@@ -57,6 +58,10 @@ func (a *JWTAuth) Require(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+type contextKey string
+const claimsKey contextKey = "claims"
+
+
 func (a *JWTAuth) RequireRealmRole(role string, next http.HandlerFunc) http.HandlerFunc {
 	return a.RequireAnyRealmRole([]string{role}, next)
 }
@@ -74,10 +79,21 @@ func (a *JWTAuth) RequireAnyRealmRole(roles []string, next http.HandlerFunc) htt
 			http.Error(w, "Forbidden", http.StatusForbidden)
 			return
 		}
-
-		next.ServeHTTP(w, r)
+        ctx := context.WithValue(r.Context(), claimsKey, claims)
+        next.ServeHTTP(w, r.WithContext(ctx)) 
+		
 	}
 }
+
+func CompanyIDFromContext(ctx context.Context) (string, bool) {
+    claims, ok := ctx.Value(claimsKey).(*KeycloakClaims)
+    if !ok || claims.CompanyID == "" {
+        return "", false
+    }
+    return claims.CompanyID, true
+}
+
+
 
 func (a *JWTAuth) parseBearerToken(r *http.Request) (*KeycloakClaims, error) {
 	authz := r.Header.Get("Authorization")
@@ -105,6 +121,7 @@ func (a *JWTAuth) parseBearerToken(r *http.Request) (*KeycloakClaims, error) {
 	}
 
 	if strings.TrimRight(claims.Issuer, "/") != a.issuer {
+		fmt.Printf("issuer mismatch: token=%q expected=%q\n", claims.Issuer, a.issuer)
 		return nil, fmt.Errorf("invalid issuer")
 	}
 

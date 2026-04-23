@@ -8,6 +8,7 @@ erDiagram
 
     telemetry {
         uuid        packet_id PK
+        uuid        company_id FK
         text        flight_id
         text        drone_id
         timestamptz recorded_at
@@ -22,6 +23,7 @@ erDiagram
     detections {
         uuid        id PK "default gen_random_uuid()"
         uuid        telemetry_packet_id FK "references telemetry(packet_id) ON DELETE CASCADE"
+        uuid        company_id FK
         text        flight_id
         timestamptz detected_at
         text        class_type
@@ -32,21 +34,24 @@ erDiagram
         text        image_path
     }
 
-    COMPANIES ||--o{ COMPANY_USERS : "has (id -> company_id)"
-    USERS ||--o{ COMPANY_USERS : "belongs to (id -> user_id)"
+    companies ||--o{ company_users : "has (id -> company_id)"
+    users ||--o{ company_users : "belongs to (id -> user_id)"
 
-    COMPANIES ||--o{ FLIGHTS : "owns (id -> company_id) "
-    FLIGHTS ||--o{ DETECTIONS_1 : "contains (id -> flight_id)"
+    companies ||--o{ flights : "owns (id -> company_id) "
+    flights ||--o{ detections_business : "contains (id -> flight_id)"
 
-    DETECTIONS_1 ||--o{ DETECTION_EVENTS : "has (id-> detection_id)"
-    DETECTIONS_1 ||--o{ DETECTION_COMMENTS : "has (id -> detection_id)"
+    detections_business ||--o{ detection_events : "has (id-> detections_business)"
+    detections_business ||--o{ detection_comments : "has (id -> detections_business)"
 
-    USERS ||--o{ DETECTION_COMMENTS : "authors (id -> author_user_id)"
-    USERS ||--o{ DETECTION_EVENTS : "creates (id -> created_by)"
-    USERS ||--o{ DETECTIONS_1 : "creates (id -> created_by)"
-    USERS ||--o{ DETECTIONS_1 : "updates (id -> updated_by)"
+    users ||--o{ detection_comments : "authors (id -> author_user_id)"
+    users ||--o{ detection_events : "creates (id -> created_by)"
+    users ||--o{ detections_business : "creates (id -> created_by)"
+    users ||--o{ detections_business : "updates (id -> updated_by)"
 
-    COMPANIES {
+    companies ||--o{ telemetry : "owns (id -> company_id)"
+    companies ||--o{ detections : "owns (id -> company_id)"
+
+    companies {
         uuid        id PK
         string      name
         string      code
@@ -55,7 +60,7 @@ erDiagram
         datetime    updated_at
     }
 
-    USERS {
+    users {
         uuid        id PK
         string      keycloak_user_id UK
         string      email
@@ -65,7 +70,7 @@ erDiagram
         datetime    updated_at
     }
 
-    COMPANY_USERS {
+    company_users {
         uuid        id PK
         uuid        company_id FK
         uuid        user_id FK
@@ -76,7 +81,7 @@ erDiagram
         datetime    updated_at
     }
 
-    FLIGHTS {
+    flights {
         uuid        id PK
         uuid        company_id FK
         string      external_id
@@ -87,8 +92,9 @@ erDiagram
         datetime    updated_at
     }
 
-    DETECTIONS_1 {
+    detections_business {
         uuid        id PK
+        uuid        company_id FK
         uuid        flight_id FK
         string      type
         string      status
@@ -107,7 +113,7 @@ erDiagram
         datetime    archived_at
     }
 
-    DETECTION_EVENTS {
+    detection_events {
         uuid        id PK
         uuid        detection_id FK
         string      event_type
@@ -118,7 +124,7 @@ erDiagram
         datetime    created_at
     }
 
-    DETECTION_COMMENTS {
+    detection_comments {
         uuid        id PK
         uuid        detection_id FK
         uuid        author_user_id FK

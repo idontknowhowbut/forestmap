@@ -48,8 +48,23 @@ type Flight struct {
 	UpdatedAt        time.Time  `db:"updated_at"`
 }
 
-type Detection struct {
+
+type Detections struct {
+    ID                uuid.UUID  `db:"id"`
+    CompanyID         uuid.UUID  `db:"company_id"`
+    TelemetryPacketID *uuid.UUID `db:"telemetry_packet_id"`
+    FlightID          string     `db:"flight_id"`
+    DetectedAt        time.Time  `db:"detected_at"`
+    ClassType         string     `db:"class_type"`
+    Score             *float64   `db:"score"`
+    Severity          *float64   `db:"severity"`
+    ImagePath         *string    `db:"image_path"`
+}
+
+
+type DetectionsBusiness struct {
 	ID              uuid.UUID  `db:"id"`
+	CompanyID       uuid.UUID  `db:"company_id"`
 	FlightID        uuid.UUID  `db:"flight_id"`
 	Type            string     `db:"type"`
 	Status          string     `db:"status"`
@@ -87,4 +102,18 @@ type DetectionComment struct {
 	CreatedAt    time.Time  `db:"created_at"`
 	UpdatedAt    time.Time  `db:"updated_at"`
 	DeletedAt    *time.Time `db:"deleted_at"`
+}
+
+type Telemetry struct {
+
+    PacketID   uuid.UUID  `db:"packet_id"`
+    CompanyID  uuid.UUID  `db:"company_id"`
+    FlightID   string     `db:"flight_id"`
+    DroneID    string     `db:"drone_id"`
+    RecordedAt time.Time  `db:"recorded_at"`
+    Heading    *float64   `db:"heading"`
+    Pitch      *float64   `db:"pitch"`
+    FOV        *float64   `db:"fov"`
+    Speed      *float64   `db:"speed"`
+    Battery    *int       `db:"battery"`
 }
