@@ -193,7 +193,8 @@ ForestMap использует **Bearer JWT** (OIDC).
 3. Создать client `forestmap-drone` (confidential)
 4. Включить **Client Authentication** и **Service Accounts**
 5. Выдать роли service account (например `drone`)
-6. Получить токен по `client_credentials`
+6. Клиенту `forestmap-drone-dedicated` добавить маппер ( по конфигурации, Hardcoded claim). Значение <COMPANY_ID_SECRET> (имя и токен - `company_id`), совпадающее с секретом в seed.sql. Например `f2e67fd0-1234-496a-ac02-a1ffcc6274ef`
+7. Получить токен по `client_credentials`
 
 ### Получение токена (пример)
 ```bash
