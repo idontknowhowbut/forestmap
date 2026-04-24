@@ -1,6 +1,8 @@
-export type DetectionType = 'fire' | 'infection' | 'logging';
+export type DetectionClassType = 'fire' | 'infection' | 'logging';
+export type DetectionType = DetectionClassType;
 export type DetectionStatus = 'active' | 'resolved' | 'archived';
-export type GeometryMode = 'full' | 'simplified' | 'centroid';
+export type DetectionSeverity = 'low' | 'medium' | 'high' | 'critical';
+export type GeometryMode = 'auto' | 'point' | 'polygon';
 
 export type BBox = {
   minLon: number;
@@ -14,6 +16,11 @@ export type GeoPoint = {
   lon: number;
 };
 
+export type PointGeometry = {
+  type: 'Point';
+  coordinates: [number, number];
+};
+
 export type PolygonGeometry = {
   type: 'Polygon';
   coordinates: number[][][];
@@ -24,7 +31,19 @@ export type MultiPolygonGeometry = {
   coordinates: number[][][][];
 };
 
-export type DetectionGeometry = PolygonGeometry | MultiPolygonGeometry;
+export type DetectionGeometry = PointGeometry | PolygonGeometry | MultiPolygonGeometry;
+
+export type GeoJSONFeature = {
+  type: 'Feature';
+  id?: string | number | null;
+  geometry: DetectionGeometry | null;
+  properties?: Record<string, unknown> | null;
+};
+
+export type GeoJSONFeatureCollection = {
+  type: 'FeatureCollection';
+  features: GeoJSONFeature[];
+};
 
 export type DetectionStats = {
   commentsCount: number;
@@ -34,43 +53,32 @@ export type DetectionStats = {
 export type DetectionSummary = {
   id: string;
   flightId: string;
+  classType: DetectionClassType;
   type: DetectionType;
   status: DetectionStatus;
   score: number;
+  severity: DetectionSeverity;
   title?: string | null;
   description?: string | null;
+  detectedAt: string;
   lastDetectionAt: string;
+  imagePath?: string | null;
   centroid: GeoPoint;
   geometry?: DetectionGeometry | null;
   stats: DetectionStats;
 };
 
 export type DetectionSearchRequest = {
-  map: {
-    bbox: BBox;
-    geometryMode: GeometryMode;
+  classes: DetectionType[];
+  bbox?: BBox;
+  minScore?: number;
+  maxScore?: number;
+  period?: {
+    from?: string;
+    to?: string;
   };
-  filters?: {
-    types?: DetectionType[];
-    statuses?: DetectionStatus[];
-    score?: {
-      from?: number;
-      to?: number;
-    };
-    period?: {
-      from?: string;
-      to?: string;
-    };
-    withComments?: boolean;
-  };
-  sort?: {
-    field: 'lastDetectionAt' | 'score';
-    direction: 'asc' | 'desc';
-  };
-  pagination: {
-    limit: number;
-    cursor?: string | null;
-  };
+  geom?: GeometryMode;
+  limit?: number;
 };
 
 export type DetectionSearchResponse = {

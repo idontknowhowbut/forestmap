@@ -1,17 +1,26 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 
-// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
   server: {
-    host: true, // Чтобы можно было открыть по IP сервера, если ты не локально
+    host: true,
     proxy: {
-      '/api': {
-        target: 'http://localhost:8443', // Проксируем запросы на Nginx
+      '/v1': {
+        target: 'http://localhost:8080',
         changeOrigin: true,
-        secure: false, // Игнорируем самоподписанный SSL (если будет HTTPS)
-      }
-    }
-  }
-})
+        secure: false,
+      },
+      '/api': {
+        target: 'http://localhost:8443',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/auth': {
+        target: 'http://localhost:8443',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
+});
