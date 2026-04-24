@@ -27,13 +27,20 @@ func (h *DroneHandler) HandleTelemetry(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	companyID, ok := CompanyIDFromContext(r.Context())
+    if !ok {
+        http.Error(w, "missing company_id in token", http.StatusUnauthorized)
+        return
+    }
+
 	var req model.TelemetryRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 
-	if err := h.Store.SaveTelemetry(req); err != nil {
+	if err := h.Store.SaveTelemetry(req, companyID); err != nil {
+		fmt.Printf("ERROR SaveTelemetry: %v\n", err)   
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -46,6 +53,12 @@ func (h *DroneHandler) HandleDetections(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+
+	companyID, ok := CompanyIDFromContext(r.Context())
+    if !ok {
+        http.Error(w, "missing company_id in token", http.StatusUnauthorized)
+        return
+    }
 
 	if err := r.ParseMultipartForm(10 << 20); err != nil {
 		http.Error(w, "File too large", http.StatusBadRequest)
@@ -97,7 +110,7 @@ func (h *DroneHandler) HandleDetections(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if err := h.Store.SaveDetections(batch, urlPath); err != nil {
+	if err := h.Store.SaveDetections(batch, urlPath, companyID); err != nil {
 		os.Remove(fsPath)
 		fmt.Printf("ERROR saving detections: %v\n", err)
 
@@ -108,6 +121,8 @@ func (h *DroneHandler) HandleDetections(w http.ResponseWriter, r *http.Request) 
 	w.WriteHeader(http.StatusCreated)
 	fmt.Fprintf(w, `{"status":"saved", "count":%d}`, len(batch.Objects))
 }
+
+
 
 // HandleDetectionsQuery returns detections as GeoJSON FeatureCollection.
 // POST /api/v1/detections:query  (application/json)

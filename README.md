@@ -1,18 +1,19 @@
 # 🌲 ForestMap
+The system for monitoring forest fires and forest diseases using drones, PostGIS, and a geospatial API.
+ForestMap receives data from drones (telemetry and detection results), stores the geometry in PostGIS, and outputs the data in **GeoJSON** format for display on a map.
 
-Система мониторинга лесных пожаров и заболеваний леса с использованием дронов, PostGIS и геопространственного API.
-
-> **Статус:** MVP / Active Development  
-> **Архитектура:** Dockerized microservices  
+> **Status:** MVP / Active Development  
+> **Archtecture:** Dockerized microservices  
 > **Backend:** Go + PostgreSQL/PostGIS  
 > **Gateway:** Nginx  
 > **Auth:** Keycloak (OIDC/JWT)  
-> **Frontend:** Web map client (в разработке)
+> **Frontend:** React + TypeScript (under development)
 
----
 
-## О проекте
+------------------------------------------------------
 
+## 🌲 О проекте
+Система мониторинга лесных пожаров и заболеваний леса с использованием дронов, PostGIS и геопространственного API.
 ForestMap принимает данные от дронов (телеметрия + результаты детекций), сохраняет геометрию в PostGIS и отдает данные в формате **GeoJSON** для отображения на карте.
 
 ### Что умеет сейчас
@@ -192,7 +193,9 @@ ForestMap использует **Bearer JWT** (OIDC).
 3. Создать client `forestmap-drone` (confidential)
 4. Включить **Client Authentication** и **Service Accounts**
 5. Выдать роли service account (например `drone`)
-6. Получить токен по `client_credentials`
+6. Клиенту `forestmap-drone-dedicated` добавить маппер ( по конфигурации, Hardcoded claim). Значение <COMPANY_ID_SECRET> (имя и токен - `company_id`), совпадающее 
+ с секретом в seed.sql. Например `f2e67fd0-1234-496a-ac02-a1ffcc6274ef`
+8. Получить токен по `client_credentials`
 
 ### Получение токена (пример)
 ```bash
