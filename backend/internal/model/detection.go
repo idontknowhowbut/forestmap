@@ -117,3 +117,9 @@ type Telemetry struct {
     Speed      *float64   `db:"speed"`
     Battery    *int       `db:"battery"`
 }
+
+type DetectionSearchRequest struct {
+    Types    []string `json:"types,omitempty"`
+    Statuses []string `json:"statuses,omitempty"`
+    Limit    int      `json:"limit,omitempty"`
+}
