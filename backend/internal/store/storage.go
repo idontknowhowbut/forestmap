@@ -93,7 +93,7 @@ func (s *Store) SaveDetections(batch model.DetectionBatchRequest, imagePath stri
 	return tx.Commit()
 }
 
-func (s *Store) QueryDetectionsGeoJSON(ctx context.Context, req model.DetectionsQueryRequest) ([]byte, error) {
+func (s *Store) QueryDetectionsGeoJSON(ctx context.Context, req model.DetectionsQueryRequest, companyID string) ([]byte, error) {
 	geomMode := req.Geom
 	if geomMode == "" {
 		geomMode = "auto"
@@ -104,11 +104,12 @@ func (s *Store) QueryDetectionsGeoJSON(ctx context.Context, req model.Detections
 		limit = 2000
 	}
 
-	args := []any{geomMode}
-	n := 2
+	args := []any{geomMode, companyID}
+	n := 3
 
 	where := []string{
 		"d.geometry_geo IS NOT NULL",
+		"d.company_id = $2",
 	}
 
 	if len(req.Classes) > 0 {

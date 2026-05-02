@@ -22,6 +22,8 @@ type KeycloakClaims struct {
 		Roles []string `json:"roles"`
 	} `json:"realm_access"`
 	CompanyID string `json:"company_id"`
+    Email     string `json:"email"`
+    FullName  string `json:"name"`
 }
 
 func NewJWTAuth(ctx context.Context, issuer, jwksURL string) (*JWTAuth, error) {
@@ -48,13 +50,14 @@ func NewJWTAuth(ctx context.Context, issuer, jwksURL string) (*JWTAuth, error) {
 
 func (a *JWTAuth) Require(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		_, err := a.parseBearerToken(r)
+		claims, err := a.parseBearerToken(r)
 		if err != nil {
 			w.Header().Set("WWW-Authenticate", `Bearer error="invalid_token"`)
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
-		next.ServeHTTP(w, r)
+		ctx := context.WithValue(r.Context(), claimsKey, claims)
+        next.ServeHTTP(w, r.WithContext(ctx))
 	}
 }
 
@@ -84,6 +87,18 @@ func (a *JWTAuth) RequireAnyRealmRole(roles []string, next http.HandlerFunc) htt
 		
 	}
 }
+
+
+// ClaimsFromContext возвращает все claims из контекста.
+func ClaimsFromContext(ctx context.Context) (*KeycloakClaims, bool) {
+	claims, ok := ctx.Value(claimsKey).(*KeycloakClaims)
+	if !ok || claims == nil {
+		return nil, false
+	}
+	return claims, true
+}
+
+
 
 func CompanyIDFromContext(ctx context.Context) (string, bool) {
     claims, ok := ctx.Value(claimsKey).(*KeycloakClaims)

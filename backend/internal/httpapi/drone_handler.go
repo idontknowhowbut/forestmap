@@ -132,6 +132,12 @@ func (h *DroneHandler) HandleDetectionsQuery(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	companyID, ok := CompanyIDFromContext(r.Context())
+    if !ok {
+        http.Error(w, "missing company_id in token", http.StatusUnauthorized)
+        return
+    }
+
 	body, err := io.ReadAll(io.LimitReader(r.Body, 2<<20))
 	if err != nil {
 		http.Error(w, "Bad request", http.StatusBadRequest)
@@ -162,7 +168,7 @@ func (h *DroneHandler) HandleDetectionsQuery(w http.ResponseWriter, r *http.Requ
 		http.Error(w, "Invalid aoi (must be valid GeoJSON geometry)", http.StatusBadRequest)
 		return
 	}
-	out, err := h.Store.QueryDetectionsGeoJSON(r.Context(), req)
+	out, err := h.Store.QueryDetectionsGeoJSON(r.Context(), req, companyID)
 	if err != nil {
 		fmt.Printf("ERROR QueryDetectionsGeoJSON: %v\n", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

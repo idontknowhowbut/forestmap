@@ -34,6 +34,7 @@ func main() {
 
 	st := store.NewStore(db)
 	handler := httpapi.NewDroneHandler(st)
+    detectionHandler := httpapi.NewDetectionHandler(st)
 
 	auth, err := httpapi.NewJWTAuth(
 		context.Background(),
@@ -52,9 +53,15 @@ func main() {
 	})
 
 	mux.HandleFunc("/v1/telemetry", auth.RequireRealmRole("drone", handler.HandleTelemetry))
+
+	
+    mux.HandleFunc("/v1/me", auth.Require(detectionHandler.HandleMe))
+
 	mux.HandleFunc("/v1/detections", auth.RequireRealmRole("drone", handler.HandleDetections))
 	mux.HandleFunc("/v1/detections:query", auth.RequireAnyRealmRole([]string{"viewer", "drone"}, handler.HandleDetectionsQuery))
-
+	mux.HandleFunc("/v1/detections/search", auth.Require(detectionHandler.HandleSearchDetections))
+	mux.HandleFunc("/v1/detections/", auth.Require(detectionHandler.HandleDetectionRoutes))
+	
 	log.Printf("listening on %s", addr)
 	if err := http.ListenAndServe(addr, logRequests(mux)); err != nil {
 		log.Fatal(err)
