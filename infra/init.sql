@@ -74,6 +74,7 @@ CREATE TABLE IF NOT EXISTS flights (
     updated_at TIMESTAMPTZ NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_flights_id ON flights (id, company_id);
+CREATE INDEX IF NOT EXISTS idx_flights_external_id ON flights (external_id, company_id);
 
 CREATE TABLE IF NOT EXISTS detections_business (
     id UUID PRIMARY KEY,

@@ -30,7 +30,7 @@ services:
       - uploads_data:/uploads:ro
     depends_on:
       - api
-      - frontend
+  #    - frontend
       - keycloak
     restart: unless-stopped
 
@@ -46,6 +46,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./seed.sql:/docker-entrypoint-initdb.d/seed.sql:ro
 
   keycloak-db:
     image: postgres:16-alpine
@@ -62,6 +63,8 @@ services:
     restart: unless-stopped
     depends_on:
       - keycloak-db
+    volumes: 
+      - ./keycloak/themes/forestmap:/opt/keycloak/themes/forestmap:ro
     environment:
       # Bootstrap admin (важно при первом запуске / новом volume)
       KEYCLOAK_ADMIN: "${KEYCLOAK_ADMIN:-admin}"
