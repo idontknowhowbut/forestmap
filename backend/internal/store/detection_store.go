@@ -1,4 +1,4 @@
-package store
+package store  
 
 import (
     "context"
@@ -24,13 +24,15 @@ func (s *Store) GetCompanyByID(ctx context.Context, id string) (*model.Company, 
 
 
 func (s *Store) SearchDetections(ctx context.Context, companyID string, req model.DetectionSearchRequest) ([]model.DetectionsBusiness, error) {
+    fmt.Printf("DEBUG SearchDetections companyID=%q\n", companyID)
     var results []model.DetectionsBusiness
     err := s.db.SelectContext(ctx, &results, `
         SELECT id, company_id, flight_id, type, status, score, title, description,
                centroid_lat, centroid_lon, area, last_detection_at,
                created_by, updated_by, created_at, updated_at, archived_at
-        FROM detections_business
-        WHERE company_id = $1
+        FROM detections_business det
+        JOIN flights f ON f.id = det.flight_id
+        WHERE f.company_id = $1
         ORDER BY last_detection_at DESC
         LIMIT 50
     `, companyID)
@@ -48,8 +50,9 @@ func (s *Store) GetDetectionByID(ctx context.Context, id string, companyID strin
 		SELECT id, company_id, flight_id, type, status, score, title, description,
 		       centroid_lat, centroid_lon, area, last_detection_at,
 		       created_by, updated_by, created_at, updated_at, archived_at
-		FROM detections_business
-		WHERE id = $1 AND company_id = $2
+		FROM detections_business det
+        JOIN flights f ON f.id = det.flight_id
+        WHERE db.id = $1 AND f.company_id = $2
 	`, id, companyID)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -64,8 +67,11 @@ func (s *Store) GetDetectionComments(ctx context.Context, detectionID string, co
     // проверка принадлежности
     var count int
     err := s.db.QueryRowContext(ctx, `
-        SELECT COUNT(*) FROM detections_business WHERE id = $1 AND company_id = $2
+        SELECT COUNT(*) FROM detections_business det
+        JOIN flights f ON f.id = det.flight_id
+        WHERE db.id = $1 AND f.company_id = $2
     `, detectionID, companyID).Scan(&count)
+    fmt.Printf("DEBUG CreateDetectionComment count=%d err=%v detectionID=%q companyID=%q\n", count, err, detectionID, companyID)
     if err != nil || count == 0 {
         return nil, ErrNotFound
     }
@@ -88,7 +94,9 @@ func (s *Store) CreateDetectionComment(ctx context.Context, detectionID string, 
     // проверка принадлежности
     var count int
     err := s.db.QueryRowContext(ctx, `
-        SELECT COUNT(*) FROM detections_business WHERE id = $1 AND company_id = $2
+        SELECT COUNT(*) FROM detections_business det
+        JOIN flights f ON f.id = det.flight_id
+        WHERE det.id = $1 AND f.company_id = $2
     `, detectionID, companyID).Scan(&count)
     if err != nil || count == 0 {
         return nil, ErrNotFound

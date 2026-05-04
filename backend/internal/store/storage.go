@@ -1,4 +1,4 @@
-package store
+package store  
 
 import (
 	"forestmap/backend/internal/model"
@@ -109,7 +109,7 @@ func (s *Store) QueryDetectionsGeoJSON(ctx context.Context, req model.Detections
 
 	where := []string{
 		"d.geometry_geo IS NOT NULL",
-		"d.company_id = $2",
+		"f.company_id = $2",
 	}
 
 	if len(req.Classes) > 0 {
@@ -184,6 +184,7 @@ WITH features AS (
     )
   ) AS feature
   FROM detections d
+  JOIN flights f ON f.external_id = d.flight_id
   WHERE ` + strings.Join(where, " AND ") + `
   ORDER BY d.detected_at DESC
   LIMIT ` + limitParam + `
