@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"encoding/json"
+    "fmt"
     "net/http"
     "strings"
     "forestmap/backend/internal/model"
@@ -82,6 +83,7 @@ func (h *DetectionHandler) HandleGetComments(w http.ResponseWriter, r *http.Requ
 }
 
 func (h *DetectionHandler) HandleCreateComment(w http.ResponseWriter, r *http.Request, id string) {
+    fmt.Printf("DEBUG HandleCreateComment id=%q\n", id)
     claims, ok := ClaimsFromContext(r.Context())
     if !ok {
         writeError(w, http.StatusUnauthorized, "UNAUTHORIZED", "Authentication required")
@@ -107,6 +109,7 @@ func (h *DetectionHandler) HandleCreateComment(w http.ResponseWriter, r *http.Re
 func (h *DetectionHandler) HandleDetectionRoutes(w http.ResponseWriter, r *http.Request) {
     path := strings.TrimPrefix(r.URL.Path, "/v1/detections/")
     parts := strings.Split(path, "/")
+    fmt.Printf("DEBUG HandleDetectionRoutes path=%q parts=%v method=%q\n", path, parts, r.Method)
     id := parts[0]
 
     if len(parts) == 1 && r.Method == http.MethodGet {
