@@ -1,4 +1,4 @@
-package store
+package store  
 
 import (
 	"forestmap/backend/internal/model"
