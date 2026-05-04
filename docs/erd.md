@@ -8,8 +8,7 @@ erDiagram
 
     telemetry {
         uuid        packet_id PK
-        uuid        company_id FK
-        text        flight_id
+        text        flight_id FK
         text        drone_id
         timestamptz recorded_at
         geometry    location "POINTZ, SRID 4326"
@@ -23,8 +22,7 @@ erDiagram
     detections {
         uuid        id PK "default gen_random_uuid()"
         uuid        telemetry_packet_id FK "references telemetry(packet_id) ON DELETE CASCADE"
-        uuid        company_id FK
-        text        flight_id
+        text        flight_id FK
         timestamptz detected_at
         text        class_type
         float       score
@@ -48,8 +46,7 @@ erDiagram
     users ||--o{ detections_business : "creates (id -> created_by)"
     users ||--o{ detections_business : "updates (id -> updated_by)"
 
-    companies ||--o{ telemetry : "owns (id -> company_id)"
-    companies ||--o{ detections : "owns (id -> company_id)"
+    flights ||--o{ telemetry : "contains (external_id -> flight_id)"
 
     companies {
         uuid        id PK
