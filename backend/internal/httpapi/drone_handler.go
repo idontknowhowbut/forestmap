@@ -21,17 +21,37 @@ func NewDroneHandler(s *store.Store) *DroneHandler {
 	return &DroneHandler{Store: s}
 }
 
+func (h *DroneHandler) resolveCompanyIDFromClaims(r *http.Request) (string, bool) {
+	claims, ok := ClaimsFromContext(r.Context())
+	if !ok {
+		return "", false
+	}
+
+	_, company, err := h.Store.EnsureUserAndCompanyByKeycloakUser(
+		r.Context(),
+		claims.Subject,
+		claims.Email,
+		claims.FullName,
+		claims.RealmAccess.Roles,
+	)
+	if err != nil {
+		return "", false
+	}
+
+	return company.ID.String(), true
+}
+
 func (h *DroneHandler) HandleTelemetry(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	companyID, ok := CompanyIDFromContext(r.Context())
-    if !ok {
-        http.Error(w, "missing company_id in token", http.StatusUnauthorized)
-        return
-    }
+	companyID, ok := h.resolveCompanyIDFromClaims(r)
+	if !ok {
+		http.Error(w, "authentication required", http.StatusUnauthorized)
+		return
+	}
 
 	var req model.TelemetryRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -40,7 +60,7 @@ func (h *DroneHandler) HandleTelemetry(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.Store.SaveTelemetry(req, companyID); err != nil {
-		fmt.Printf("ERROR SaveTelemetry: %v\n", err)   
+		fmt.Printf("ERROR SaveTelemetry: %v\n", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -54,11 +74,11 @@ func (h *DroneHandler) HandleDetections(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	companyID, ok := CompanyIDFromContext(r.Context())
-    if !ok {
-        http.Error(w, "missing company_id in token", http.StatusUnauthorized)
-        return
-    }
+	companyID, ok := h.resolveCompanyIDFromClaims(r)
+	if !ok {
+		http.Error(w, "authentication required", http.StatusUnauthorized)
+		return
+	}
 
 	if err := r.ParseMultipartForm(10 << 20); err != nil {
 		http.Error(w, "File too large", http.StatusBadRequest)
@@ -122,8 +142,6 @@ func (h *DroneHandler) HandleDetections(w http.ResponseWriter, r *http.Request) 
 	fmt.Fprintf(w, `{"status":"saved", "count":%d}`, len(batch.Objects))
 }
 
-
-
 // HandleDetectionsQuery returns detections as GeoJSON FeatureCollection.
 // POST /api/v1/detections:query  (application/json)
 func (h *DroneHandler) HandleDetectionsQuery(w http.ResponseWriter, r *http.Request) {
@@ -132,11 +150,11 @@ func (h *DroneHandler) HandleDetectionsQuery(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	companyID, ok := CompanyIDFromContext(r.Context())
-    if !ok {
-        http.Error(w, "missing company_id in token", http.StatusUnauthorized)
-        return
-    }
+	companyID, ok := h.resolveCompanyIDFromClaims(r)
+	if !ok {
+		http.Error(w, "authentication required", http.StatusUnauthorized)
+		return
+	}
 
 	body, err := io.ReadAll(io.LimitReader(r.Body, 2<<20))
 	if err != nil {

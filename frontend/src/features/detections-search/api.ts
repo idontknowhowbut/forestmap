@@ -13,7 +13,7 @@ import type {
 
 const USE_MOCKS = import.meta.env.VITE_USE_MOCKS !== 'false';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '';
-const QUERY_ENDPOINT = import.meta.env.VITE_DETECTIONS_QUERY_ENDPOINT ?? '/v1/detections:query';
+const QUERY_ENDPOINT = import.meta.env.VITE_DETECTIONS_QUERY_ENDPOINT ?? '/api/v1/detections:query';
 
 const MOCK_DETECTIONS: DetectionSummary[] = [
   {

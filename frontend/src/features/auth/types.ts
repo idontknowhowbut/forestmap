@@ -1,4 +1,4 @@
-export type UserRole = 'viewer' | 'admin';
+export type UserRole = 'viewer' | 'admin' | 'drone';
 export type AuthMode = 'keycloak' | 'mock';
 
 export type AuthUser = {
@@ -7,6 +7,8 @@ export type AuthUser = {
   email: string;
   role: UserRole;
   roles: UserRole[];
+  companyId?: string | null;
+  companyCode?: string | null;
   companyName?: string | null;
 };
 

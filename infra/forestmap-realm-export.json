@@ -1,0 +1,171 @@
+{
+  "id": "6b2970cd-663b-45f5-b51b-c495b0326c79",
+  "realm": "forestmap",
+  "displayName": "Forestmap",
+  "enabled": true,
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "rememberMe": true,
+  "verifyEmail": false,
+  "sslRequired": "external",
+  "defaultDefaultClientScopes": [
+    "profile",
+    "email",
+    "roles",
+    "web-origins"
+  ],
+  "defaultOptionalClientScopes": [
+    "address",
+    "phone",
+    "offline_access",
+    "microprofile-jwt"
+  ],
+  "roles": {
+    "realm": [
+      {
+        "name": "offline_access",
+        "description": "${role_offline-access}",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "forestmap"
+      },
+      {
+        "name": "uma_authorization",
+        "description": "${role_uma_authorization}",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "forestmap"
+      },
+      {
+        "name": "viewer",
+        "description": "Viewer access to the working map UI",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "forestmap"
+      },
+      {
+        "name": "admin",
+        "description": "Administrator access to the web UI",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "forestmap"
+      },
+      {
+        "name": "drone",
+        "description": "Technical role for drone-side integrations",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "forestmap"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "forestmap-frontend",
+      "name": "Forestmap Frontend",
+      "description": "Public SPA client for the Forestmap web UI",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "redirectUris": [
+        "http://localhost:8443/*",
+        "http://127.0.0.1:8443/*",
+        "http://localhost:5173/*",
+        "http://127.0.0.1:5173/*",
+        "http://*:8443/*"
+      ],
+      "webOrigins": [
+        "http://localhost:8443",
+        "http://127.0.0.1:8443",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "+"
+      ],
+      "rootUrl": "http://localhost:8443",
+      "baseUrl": "/",
+      "adminUrl": "http://localhost:8443",
+      "frontchannelLogout": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "authorizationServicesEnabled": false,
+      "fullScopeAllowed": true,
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:8443/*##http://127.0.0.1:8443/*##http://localhost:5173/*##http://127.0.0.1:5173/*"
+      },
+      "defaultClientScopes": [
+        "web-origins",
+        "roles",
+        "profile",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "microprofile-jwt"
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "viewer",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Viewer",
+      "lastName": "User",
+      "email": "viewer@example.local",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "viewer",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "viewer"
+      ]
+    },
+    {
+      "username": "admin",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Admin",
+      "lastName": "User",
+      "email": "admin@example.local",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "viewer",
+        "admin"
+      ]
+    },
+    {
+      "username": "drone",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Drone",
+      "lastName": "Service",
+      "email": "drone@example.local",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "drone",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "drone"
+      ]
+    }
+  ]
+}

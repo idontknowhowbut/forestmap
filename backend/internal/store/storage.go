@@ -1,15 +1,15 @@
-package store  
+package store
 
 import (
-	"forestmap/backend/internal/model"
-	"github.com/jmoiron/sqlx"
+	"context"
 	"encoding/json"
 	"fmt"
-  "context"
 	"strconv"
 	"strings"
+
+	"forestmap/backend/internal/model"
+	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
-	
 )
 
 type Store struct {
@@ -113,7 +113,7 @@ func (s *Store) QueryDetectionsGeoJSON(ctx context.Context, req model.Detections
 	}
 
 	if len(req.Classes) > 0 {
-		where = append(where, "d.class_type = ANY($"+strconv.Itoa(n)+")")
+		where = append(where, "(CASE WHEN d.class_type = 'disease' THEN 'infection' ELSE d.class_type END) = ANY($"+strconv.Itoa(n)+")")
 		args = append(args, pq.Array(req.Classes))
 		n++
 	}
@@ -130,9 +130,21 @@ func (s *Store) QueryDetectionsGeoJSON(ctx context.Context, req model.Detections
 		n++
 	}
 
+	if req.MaxScore != nil {
+		where = append(where, "d.score <= $"+strconv.Itoa(n))
+		args = append(args, *req.MaxScore)
+		n++
+	}
+
 	if req.Since != nil {
 		where = append(where, "d.detected_at >= $"+strconv.Itoa(n))
 		args = append(args, *req.Since)
+		n++
+	}
+
+	if req.Until != nil {
+		where = append(where, "d.detected_at <= $"+strconv.Itoa(n))
+		args = append(args, *req.Until)
 		n++
 	}
 
@@ -175,12 +187,26 @@ WITH features AS (
     'properties', jsonb_build_object(
       'flight_id', d.flight_id,
       'detected_at', d.detected_at,
-      'class_type', d.class_type,
+      'class_type', CASE WHEN d.class_type = 'disease' THEN 'infection' ELSE d.class_type END,
       'score', d.score,
       'severity', d.severity,
       'image_path', d.image_path,
       'geometry_image', d.geometry_image,
-      'telemetry_packet_id', d.telemetry_packet_id
+      'telemetry_packet_id', d.telemetry_packet_id,
+      'status', 'active',
+      'title', CASE
+        WHEN d.class_type = 'fire' THEN 'Пожар'
+        WHEN d.class_type IN ('infection', 'disease') THEN 'Заражение'
+        WHEN d.class_type = 'logging' THEN 'Вырубка'
+        ELSE 'Детекция'
+      END,
+      'description', NULL,
+      'commentsCount', 0,
+      'eventsCount', 0,
+      'centroid', jsonb_build_object(
+        'lat', ST_Y(ST_PointOnSurface(d.geometry_geo)),
+        'lon', ST_X(ST_PointOnSurface(d.geometry_geo))
+      )
     )
   ) AS feature
   FROM detections d
@@ -188,14 +214,13 @@ WITH features AS (
   WHERE ` + strings.Join(where, " AND ") + `
   ORDER BY d.detected_at DESC
   LIMIT ` + limitParam + `
-  )
-  SELECT jsonb_build_object(
-    'type','FeatureCollection',
-    'features', COALESCE(jsonb_agg(features.feature), '[]'::jsonb)
-  )::jsonb
-  FROM features;
+)
+SELECT jsonb_build_object(
+  'type','FeatureCollection',
+  'features', COALESCE(jsonb_agg(features.feature), '[]'::jsonb)
+)::jsonb
+FROM features;
 `
-
 
 	var out []byte
 	if err := s.db.QueryRowContext(ctx, q, args...).Scan(&out); err != nil {
