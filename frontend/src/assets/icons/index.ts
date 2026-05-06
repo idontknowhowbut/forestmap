@@ -1,0 +1,13 @@
+export { default as addDetectionIcon } from './adddetectionicon.png';
+export { default as addIcon } from './addicon.png';
+export { default as bugsIcon } from './bugsicon.png';
+export { default as distanceIcon } from './distanceicon.png';
+export { default as exitIcon } from './exiticon.png';
+export { default as fireIcon } from './fireicon.png';
+export { default as layersIcon } from './layersicon.png';
+export { default as refreshIcon } from './refreshicon.png';
+export { default as sciIcon } from './sciicon.png';
+export { default as screenshotIcon } from './screenshoticon.png';
+export { default as shareIcon } from './shareicon.png';
+export { default as themeIcon } from './themeicon.png';
+export { default as tutorIcon } from './tutoricon.png';

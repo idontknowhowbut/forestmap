@@ -1,73 +1,62 @@
-# React + TypeScript + Vite
+# Forestmap Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Что реализовано
 
-Currently, two official plugins are available:
+- `keycloak-js` авторизация с fallback в mock mode
+- логин/логаут, обработка redirect callback после Keycloak, хранение актуального access token в сессии приложения
+- автоматическая передача `Authorization: Bearer <token>` через общий `authFetch`
+- роли `viewer` и `admin`: viewer открывает рабочую карту, admin дополнительно видит базовый административный контур
+- карта на React + Leaflet
+- загрузка детекций через `POST /v1/detections:query`
+- разбор ответа backend в формате GeoJSON `FeatureCollection`
+- отображение Point как цветных точек, Polygon / MultiPolygon как полигонов
+- дифференциация объектов по `class_type`: `fire`, `infection`/`disease`, `logging`
+- popup по клику на объект карты с `class_type`, `detected_at`, `score`, `severity`, `image_path`
+- левая панель фильтров: типы аномалий, диапазон дат, минимальный и максимальный score
+- привязка фильтров к запросу `detections:query`
+- правая панель со статистикой текущей выборки и списком последних детекций
+- переключение темы день/ночь с сохранением в `localStorage`
+- инверсия цветов PNG-иконок при смене темы
+- переключение картографического слоя OSM / Satellite
+- основной цвет интерфейса заменён на `rgb(15, 122, 58)`
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Как запустить
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Переменные окружения
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+При наличии параметров Keycloak фронтенд будет использовать реальную авторизацию:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```env
+VITE_KEYCLOAK_URL=http://localhost:8443/auth
+VITE_KEYCLOAK_REALM=forestmap
+VITE_KEYCLOAK_CLIENT_ID=forestmap-frontend
+VITE_USE_MOCKS=true
+VITE_API_BASE_URL=
+VITE_DETECTIONS_QUERY_ENDPOINT=/v1/detections:query
 ```
+
+Если параметры Keycloak не заданы, приложение стартует в mock-режиме и предлагает вход как `viewer` или `admin`.
+
+## Контракт detections:query
+
+Фронтенд сейчас отправляет payload вида:
+
+```json
+{
+  "classes": ["fire", "infection", "disease", "logging"],
+  "geom": "auto",
+  "bbox": [30.1, 60.0, 30.9, 60.5],
+  "min_score": 0.2,
+  "max_score": 0.9,
+  "since": "2026-04-01T00:00:00Z",
+  "until": "2026-04-24T23:59:59Z",
+  "limit": 500
+}
+```
+
+`max_score` и `until` уже подготовлены на фронте. Если текущий backend пока их игнорирует, frontend дополнительно фильтрует ответ локально, чтобы UI работал корректно до финализации контракта.
