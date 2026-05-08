@@ -56,8 +56,6 @@ func main() {
 	mux.HandleFunc("/v1/me", auth.Require(detectionHandler.HandleMe))
 	mux.HandleFunc("/v1/detections", auth.RequireRealmRole("drone", handler.HandleDetections))
 	mux.HandleFunc("/v1/detections:query", auth.RequireAnyRealmRole([]string{"viewer", "admin", "drone"}, handler.HandleDetectionsQuery))
-	mux.HandleFunc("/v1/detections/search", auth.Require(detectionHandler.HandleSearchDetections))
-	mux.HandleFunc("/v1/detections/", auth.Require(detectionHandler.HandleDetectionRoutes))
 
 	log.Printf("listening on %s", addr)
 	if err := http.ListenAndServe(addr, logRequests(mux)); err != nil {

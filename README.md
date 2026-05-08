@@ -271,7 +271,7 @@ curl -i -X POST http://localhost:8081/v1/detections \
       {
         \"class\": \"fire\",
         \"score\": 0.97,
-        \"severity\": 0.8,
+        \"severity\": 95,
         \"geometry_geo\": {
           \"type\": \"Polygon\",
           \"coordinates\": [[[37.6181,55.7511],[37.6182,55.7511],[37.6182,55.7512],[37.6181,55.7512],[37.6181,55.7511]]]
@@ -334,7 +334,7 @@ curl -s -X POST http://localhost:8443/api/v1/detections:query \
         "detected_at": "2026-02-24T12:00:02Z",
         "class_type": "fire",
         "score": 0.97,
-        "severity": 0.8,
+        "severity": 95,
         "image_path": "/uploads/1771596434_frame.jpg",
         "geometry_image": { "x": 100, "y": 120, "w": 80, "h": 60 },
         "telemetry_packet_id": "d332aba1-90fb-4dc0-9fbc-eade11393a48"
@@ -385,7 +385,7 @@ Nginx с `proxy_pass .../;` обрезает префикс `/api/`, поэто�
 - `flight_id`
 - `detected_at`
 - `class_type`
-- `score`, `severity`
+- `score` (0..1), `severity` (0..100)
 - `geometry_geo GEOMETRY`
 - `geometry_image JSONB`
 - `image_path TEXT`

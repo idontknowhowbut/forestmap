@@ -136,7 +136,7 @@ paths:
                         {
                           "class":"fire",
                           "score":0.98,
-                          "severity":0.80,
+                          "severity":95,
                           "geometry_geo":{
                             "type":"Polygon",
                             "coordinates":[[[37.6155,55.7521],[37.6157,55.7521],[37.6157,55.7523],[37.6155,55.7523],[37.6155,55.7521]]]
@@ -524,9 +524,11 @@ components:
           format: double
           example: 0.98
         severity:
-          type: number
-          format: double
-          example: 0.8
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 100
+          example: 95
         geometry_geo:
           $ref: "#/components/schemas/GeoJSONPolygon"
         geometry_image:
@@ -674,8 +676,10 @@ components:
                 - "null"
             severity:
               type:
-                - number
+                - integer
                 - "null"
+              minimum: 0
+              maximum: 100
             image_path:
               type:
                 - string

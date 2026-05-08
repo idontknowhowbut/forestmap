@@ -38,7 +38,7 @@ type DetectionBatchRequest struct {
 type DetectionObject struct {
 	Class         string         `json:"class"`
 	Score         float64        `json:"score"`
-	Severity      float64        `json:"severity"`
+	Severity      int            `json:"severity"`
 	GeometryGeo   GeoJSONPolygon `json:"geometry_geo"`
 	GeometryImage Box            `json:"geometry_image"`
 }

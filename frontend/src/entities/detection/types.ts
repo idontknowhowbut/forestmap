@@ -1,7 +1,7 @@
 export type DetectionClassType = 'fire' | 'infection' | 'logging';
 export type DetectionType = DetectionClassType;
 export type DetectionStatus = 'active' | 'resolved' | 'archived';
-export type DetectionSeverity = 'low' | 'medium' | 'high' | 'critical';
+export type DetectionSeverity = number;
 export type GeometryMode = 'auto' | 'point' | 'polygon';
 
 export type BBox = {

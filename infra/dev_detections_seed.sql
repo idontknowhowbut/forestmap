@@ -62,7 +62,7 @@ INSERT INTO detections (
     'fire',
     'f2e67fd0-1234-496a-ac02-a1ffcc6274ef',
     0.92,
-    0.90,
+    95,
     ST_GeomFromText('POLYGON((30.5520 60.1180,30.5660 60.1180,30.5660 60.1290,30.5520 60.1290,30.5520 60.1180))', 4326),
     '{"source":"dev-seed","note":"fire rendered as point via backend"}'::jsonb,
     '/uploads/dev/fire-1.jpg'
@@ -75,7 +75,7 @@ INSERT INTO detections (
     'infection',
     'f2e67fd0-1234-496a-ac02-a1ffcc6274ef',
     0.64,
-    0.50,
+    65,
     ST_GeomFromText('POLYGON((30.7000 60.0900,30.7600 60.0820,30.7900 60.1120,30.7750 60.1480,30.7320 60.1620,30.6900 60.1400,30.7000 60.0900))', 4326),
     '{"source":"dev-seed","note":"complex infection polygon"}'::jsonb,
     '/uploads/dev/infection-1.jpg'
@@ -88,7 +88,7 @@ INSERT INTO detections (
     'logging',
     'f2e67fd0-1234-496a-ac02-a1ffcc6274ef',
     0.48,
-    0.30,
+    45,
     ST_GeomFromText('MULTIPOLYGON(((30.6200 60.1800,30.6550 60.1800,30.6550 60.2100,30.6200 60.2100,30.6200 60.1800)),((30.6680 60.2050,30.7000 60.2050,30.7000 60.2350,30.6680 60.2350,30.6680 60.2050)))', 4326),
     '{"source":"dev-seed","note":"logging multipolygon"}'::jsonb,
     '/uploads/dev/logging-1.jpg'
@@ -101,7 +101,7 @@ INSERT INTO detections (
     'disease',
     'f2e67fd0-1234-496a-ac02-a1ffcc6274ef',
     0.73,
-    0.61,
+    70,
     ST_GeomFromText('MULTIPOLYGON(((30.8200 60.0900,30.8550 60.0900,30.8550 60.1250,30.8200 60.1250,30.8200 60.0900)),((30.8700 60.1000,30.9020 60.1000,30.9020 60.1320,30.8700 60.1320,30.8700 60.1000)))', 4326),
     '{"source":"dev-seed","note":"disease multipolygon normalized to infection"}'::jsonb,
     '/uploads/dev/disease-1.jpg'

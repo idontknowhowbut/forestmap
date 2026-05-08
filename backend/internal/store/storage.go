@@ -109,6 +109,7 @@ func (s *Store) QueryDetectionsGeoJSON(ctx context.Context, req model.Detections
 
 	where := []string{
 		"d.geometry_geo IS NOT NULL",
+		"d.company_id = $2",
 		"f.company_id = $2",
 	}
 

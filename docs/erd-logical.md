@@ -49,7 +49,7 @@ erDiagram
         string detected_at
         string class_code FK
         float score
-        float severity
+        int severity "0..100"
         string geometry_geo
         string geometry_image
         string media_id FK
