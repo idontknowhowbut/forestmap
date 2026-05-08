@@ -174,8 +174,7 @@
   "loginTheme": "forestmap",
   "internationalizationEnabled": true,
   "supportedLocales": [
-    "ru",
-    "en"
+    "ru"
   ],
   "defaultLocale": "ru"
 }

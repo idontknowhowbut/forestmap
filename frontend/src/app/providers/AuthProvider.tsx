@@ -348,6 +348,7 @@ export function AuthProvider({ children }: ProviderProps) {
 
       await keycloakRef.current.login({
         redirectUri: window.location.origin,
+        locale: 'ru',
       });
       return;
     }

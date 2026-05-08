@@ -445,3 +445,198 @@ label[for="rememberMe"] {
     border-radius: 16px !important;
   }
 }
+
+/* final auth polish */
+div.pf-v5-c-form-control:has(> #login-select-toggle) {
+  padding-right: 0 !important;
+}
+
+div.pf-v5-c-form-control:has(> #login-select-toggle) .pf-v5-c-form-control__utilities {
+  align-self: stretch !important;
+}
+
+.pf-v5-c-check {
+  align-items: center !important;
+}
+
+.pf-v5-c-check__label,
+label[for="rememberMe"] {
+  position: relative !important;
+  top: 1px !important;
+  margin-left: -2px !important;
+}
+
+/* auth refactor v2 */
+.login-pf-page {
+  padding-top: 0 !important;
+}
+
+#kc-content,
+#kc-content-wrapper,
+#kc-form,
+#kc-form-wrapper {
+  width: 100% !important;
+}
+
+.pf-v5-c-login__main,
+.login-pf-page .card-pf,
+.kcLoginClass .pf-v5-c-card {
+  width: 100% !important;
+  overflow: visible !important;
+}
+
+.pf-v5-c-form,
+#kc-form-login {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 18px !important;
+}
+
+.pf-v5-c-form__group,
+.form-group {
+  margin-bottom: 0 !important;
+}
+
+#kc-page-title {
+  text-align: center !important;
+}
+
+/* Keep ordinary field labels uppercase, but not checkbox/dropdown text. */
+#kc-form-options label,
+#kc-form-options .checkbox label,
+.pf-v5-c-check__label,
+label[for="rememberMe"] {
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+
+/* Language selector: the icon area used to steal pointer events, so only part of the select was clickable. */
+#kc-locale,
+#kc-locale-wrapper {
+  width: 100% !important;
+  margin-bottom: 16px !important;
+}
+
+#kc-locale .pf-v5-c-menu-toggle,
+#kc-locale button,
+#kc-locale select,
+select#login-select-toggle,
+div.pf-v5-c-form-control:has(> #login-select-toggle) {
+  width: 100% !important;
+}
+
+div.pf-v5-c-form-control:has(> #login-select-toggle) {
+  position: relative !important;
+  overflow: visible !important;
+}
+
+#login-select-toggle {
+  position: relative !important;
+  z-index: 2 !important;
+  width: 100% !important;
+  padding-right: 50px !important;
+  line-height: 42px !important;
+}
+
+div.pf-v5-c-form-control:has(> #login-select-toggle) .pf-v5-c-form-control__utilities,
+div.pf-v5-c-form-control:has(> #login-select-toggle) .pf-v5-c-form-control__toggle-icon {
+  pointer-events: none !important;
+  position: absolute !important;
+  right: 0 !important;
+  top: 0 !important;
+  z-index: 1 !important;
+}
+
+#kc-locale-dropdown,
+#kc-locale ul,
+#kc-locale .pf-v5-c-menu,
+#kc-locale .pf-v5-c-menu__content,
+#kc-locale .pf-v5-c-menu__list {
+  background: var(--fm-input) !important;
+  border: 1px solid var(--fm-border-strong) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.34) !important;
+  color: var(--fm-text) !important;
+  overflow: hidden !important;
+}
+
+#kc-locale a,
+#kc-locale .pf-v5-c-menu__item,
+#kc-locale .pf-v5-c-menu__item-text {
+  color: var(--fm-text) !important;
+  font-size: 14px !important;
+  text-decoration: none !important;
+}
+
+#kc-locale a:hover,
+#kc-locale .pf-v5-c-menu__item:hover {
+  background: rgba(15, 122, 58, 0.14) !important;
+  color: var(--fm-text) !important;
+}
+
+/* Remember me alignment for both PatternFly v5 and classic Keycloak markup. */
+#kc-form-options {
+  margin-top: -4px !important;
+}
+
+#kc-form-options .checkbox,
+#kc-form-options .pf-v5-c-check,
+.pf-v5-c-check {
+  display: flex !important;
+  align-items: center !important;
+  min-height: 22px !important;
+}
+
+#kc-form-options .checkbox label,
+#kc-form-options label,
+.pf-v5-c-check__label,
+label[for="rememberMe"] {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-height: 22px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  color: var(--fm-text-soft) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  line-height: 22px !important;
+}
+
+#kc-form-options .checkbox input[type="checkbox"],
+#kc-form-options input[type="checkbox"],
+.pf-v5-c-check__input,
+#rememberMe {
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  flex-basis: 18px !important;
+  margin: 0 !important;
+  vertical-align: middle !important;
+  transform: translateY(0) !important;
+}
+
+#kc-form-options .checkbox label input[type="checkbox"] {
+  position: static !important;
+}
+
+/* Better spacing between remember-me row and submit button. */
+#kc-form-options + #kc-form-buttons,
+#kc-form-buttons {
+  margin-top: 4px !important;
+}
+
+#kc-login {
+  width: 100% !important;
+}
+
+@media (max-width: 480px) {
+  #kc-header-wrapper::before,
+  .kcLogoText::before {
+    font-size: 28px !important;
+  }
+
+  #kc-page-title {
+    font-size: 20px !important;
+  }
+}
