@@ -19,7 +19,14 @@ func (h *DetectionHandler) HandleMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	company, err := h.Store.GetCompanyByID(r.Context(), claims.CompanyID)
+	externalUserID := claims.ExternalUserID()
+	user, company, err := h.Store.EnsureUserAndCompanyByKeycloakUser(
+		r.Context(),
+		externalUserID,
+		claims.Email,
+		claims.FullName,
+		claims.RealmAccess.Roles,
+	)
 	if err != nil {
 		writeError(w, http.StatusUnauthorized, "UNAUTHORIZED", "Authentication required")
 		return
@@ -27,13 +34,15 @@ func (h *DetectionHandler) HandleMe(w http.ResponseWriter, r *http.Request) {
 
 	resp := map[string]any{
 		"data": map[string]any{
-			"id":             claims.Subject,
-			"keycloakUserId": claims.Subject,
-			"email":          claims.Email,
-			"fullName":       claims.FullName,
+			"id":             user.ID,
+			"keycloakUserId": externalUserID,
+			"email":          user.Email,
+			"fullName":       user.FullName,
+			"roles":          claims.RealmAccess.Roles,
 			"company": map[string]any{
 				"id":   company.ID,
 				"name": company.Name,
+				"code": company.Code,
 			},
 		},
 	}

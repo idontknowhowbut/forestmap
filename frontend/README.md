@@ -35,9 +35,9 @@ npm run dev
 VITE_KEYCLOAK_URL=http://localhost:8443/auth
 VITE_KEYCLOAK_REALM=forestmap
 VITE_KEYCLOAK_CLIENT_ID=forestmap-frontend
-VITE_USE_MOCKS=true
+VITE_USE_MOCKS=false
 VITE_API_BASE_URL=
-VITE_DETECTIONS_QUERY_ENDPOINT=/v1/detections:query
+VITE_DETECTIONS_QUERY_ENDPOINT=/api/v1/detections:query
 ```
 
 Если параметры Keycloak не заданы, приложение стартует в mock-режиме и предлагает вход как `viewer` или `admin`.

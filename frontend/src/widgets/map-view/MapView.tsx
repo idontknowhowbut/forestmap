@@ -26,13 +26,15 @@ type FocusRequest =
 
 type MapLayerMode = 'osm' | 'satellite';
 
+type SelectionSource = 'list' | 'map';
+
 type Props = {
   items?: DetectionSummary[];
   selectedDetectionId?: string | null;
   focusRequest?: FocusRequest;
   zoomCommand?: ZoomCommand;
   mapLayer: MapLayerMode;
-  onSelectDetection?: (id: string) => void;
+  onSelectDetection?: (id: string, source: SelectionSource) => void;
   onBoundsChange: (bbox: BBox) => void;
   onMouseCoordsChange: (coords: { lat: number; lng: number }) => void;
 };
@@ -210,7 +212,7 @@ function DetectionLayer({
 }: {
   item: DetectionSummary;
   selectedDetectionId: string | null;
-  onSelectDetection?: (id: string) => void;
+  onSelectDetection?: (id: string, source: SelectionSource) => void;
 }) {
   const isSelected = selectedDetectionId === item.id;
   const color = getGeometryColor(item.classType);
@@ -225,7 +227,7 @@ function DetectionLayer({
         key={item.id}
         center={[point.lat, point.lon]}
         radius={isSelected ? 9 : 7}
-        eventHandlers={{ click: () => onSelectDetection?.(item.id) }}
+        eventHandlers={{ click: () => onSelectDetection?.(item.id, 'map') }}
         pathOptions={{
           color: isSelected ? '#ffffff' : color,
           weight: isSelected ? 3 : 2,
@@ -251,7 +253,7 @@ function DetectionLayer({
       <Polygon
         key={item.id}
         positions={positions}
-        eventHandlers={{ click: () => onSelectDetection?.(item.id) }}
+        eventHandlers={{ click: () => onSelectDetection?.(item.id, 'map') }}
         pathOptions={{
           color: isSelected ? '#ffffff' : color,
           weight: isSelected ? 3 : 2,
@@ -278,7 +280,7 @@ function DetectionLayer({
         <Polygon
           key={`${item.id}-${index}`}
           positions={positions}
-          eventHandlers={{ click: () => onSelectDetection?.(item.id) }}
+          eventHandlers={{ click: () => onSelectDetection?.(item.id, 'map') }}
           pathOptions={{
             color: isSelected ? '#ffffff' : color,
             weight: isSelected ? 3 : 2,

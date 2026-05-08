@@ -35,6 +35,9 @@ type FocusRequest =
   | null;
 
 type MapLayerMode = 'osm' | 'satellite';
+type SelectionSource = 'list' | 'map';
+
+const MAP_LAYER_STORAGE_KEY = 'forestmap.map.layer';
 
 const SEARCH_DEBOUNCE_MS = 300;
 const DEFAULT_SCORE_MIN = 0;
@@ -57,6 +60,18 @@ function addDays(date: Date, days: number) {
 
 const DEFAULT_DATE_TO = toDateInputValue(new Date());
 const DEFAULT_DATE_FROM = toDateInputValue(addDays(new Date(), -30));
+
+function readStoredMapLayer(): MapLayerMode {
+  if (typeof window === 'undefined') {
+    return 'osm';
+  }
+  try {
+    const stored = window.localStorage.getItem(MAP_LAYER_STORAGE_KEY);
+    return stored === 'satellite' ? 'satellite' : 'osm';
+  } catch {
+    return 'osm';
+  }
+}
 
 function toStartOfDayIso(value: string) {
   return `${value}T00:00:00Z`;
@@ -85,7 +100,7 @@ export function MapPage() {
   const [dateFrom, setDateFrom] = useState(DEFAULT_DATE_FROM);
   const [dateTo, setDateTo] = useState(DEFAULT_DATE_TO);
   const [selectedTypes, setSelectedTypes] = useState<DetectionType[]>(DEFAULT_SELECTED_TYPES);
-  const [mapLayer, setMapLayer] = useState<MapLayerMode>('osm');
+  const [mapLayer, setMapLayer] = useState<MapLayerMode>(() => readStoredMapLayer());
 
   const [coords, setCoords] = useState({ lat: 60.1234, lng: 30.5678 });
   const [selectedDetectionId, setSelectedDetectionId] = useState<string | null>(null);
@@ -176,6 +191,14 @@ export function MapPage() {
     };
   }, [bbox, loadDetections]);
 
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(MAP_LAYER_STORAGE_KEY, mapLayer);
+    } catch {
+      // ignore storage errors
+    }
+  }, [mapLayer]);
+
   const selectedDetection = useMemo(
     () => items.find((item) => item.id === selectedDetectionId) ?? null,
     [items, selectedDetectionId],
@@ -198,7 +221,7 @@ export function MapPage() {
   }, []);
 
   const handleSelectDetection = useCallback(
-    (id: string) => {
+    (id: string, source: SelectionSource = 'map') => {
       if (selectedDetectionId === id) {
         setSelectedDetectionId(null);
         return;
@@ -207,7 +230,7 @@ export function MapPage() {
       const item = items.find((detection) => detection.id === id);
       setSelectedDetectionId(id);
 
-      if (item) {
+      if (source === 'list' && item) {
         setFocusRequest({
           id: Date.now(),
           centroid: item.centroid,
@@ -421,7 +444,7 @@ export function MapPage() {
               <div
                 key={item.id}
                 className={`scroll-item ${selectedDetectionId === item.id ? 'scroll-item-selected' : ''}`}
-                onClick={() => handleSelectDetection(item.id)}
+                onClick={() => handleSelectDetection(item.id, 'list')}
               >
                 <div className="scroll-item__title">{item.title ?? item.id}</div>
                 <span className="bottom-label">

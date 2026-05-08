@@ -1,4 +1,10 @@
 CREATE EXTENSION IF NOT EXISTS postgis;
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+-- Legacy MVP tables were replaced by the canonical detections table.
+DROP TABLE IF EXISTS detection_comments;
+DROP TABLE IF EXISTS detection_events;
+DROP TABLE IF EXISTS detections_business;
 
 CREATE TABLE IF NOT EXISTS companies (
     id UUID PRIMARY KEY,
@@ -55,13 +61,18 @@ CREATE TABLE IF NOT EXISTS detections (
     detected_at TIMESTAMPTZ NOT NULL,
     class_type TEXT NOT NULL,
     company_id UUID REFERENCES companies(id),
-    score FLOAT,
-    severity FLOAT,
-    geometry_geo GEOMETRY(POLYGON, 4326),
+    score FLOAT CHECK (score IS NULL OR (score >= 0 AND score <= 1)),
+    severity INT CHECK (severity IS NULL OR (severity >= 0 AND severity <= 100)),
+    geometry_geo GEOMETRY,
     geometry_image JSONB,
     image_path TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_detections_geo ON detections USING GIST (geometry_geo);
+
+ALTER TABLE detections DROP CONSTRAINT IF EXISTS detections_score_range;
+ALTER TABLE detections ADD CONSTRAINT detections_score_range CHECK (score IS NULL OR (score >= 0 AND score <= 1));
+ALTER TABLE detections DROP CONSTRAINT IF EXISTS detections_severity_range;
+ALTER TABLE detections ADD CONSTRAINT detections_severity_range CHECK (severity IS NULL OR (severity >= 0 AND severity <= 100));
 
 CREATE TABLE IF NOT EXISTS flights (
     id UUID PRIMARY KEY,
@@ -75,51 +86,4 @@ CREATE TABLE IF NOT EXISTS flights (
 );
 CREATE INDEX IF NOT EXISTS idx_flights_id ON flights (id, company_id);
 CREATE INDEX IF NOT EXISTS idx_flights_external_id ON flights (external_id, company_id);
-
-CREATE TABLE IF NOT EXISTS detections_business (
-    id UUID PRIMARY KEY,
-    flight_id UUID REFERENCES flights(id),
-    company_id UUID REFERENCES companies(id),
-    type TEXT NOT NULL,
-    status TEXT NOT NULL,
-    score INT,
-    title TEXT NOT NULL,
-    description TEXT NOT NULL,
-    geometry GEOMETRY,
-    centroid_lat DECIMAL,
-    centroid_lon DECIMAL,
-    area DECIMAL,  
-    last_detection_at TIMESTAMPTZ NOT NULL,   
-    created_by UUID REFERENCES users(id),
-    updated_by UUID REFERENCES users(id),
-    created_at TIMESTAMPTZ NOT NULL,
-    updated_at TIMESTAMPTZ NOT NULL,
-    archived_at TIMESTAMPTZ NULL
-);
-CREATE INDEX IF NOT EXISTS idx_detections_id ON detections_business (id, flight_id);
-
-CREATE TABLE IF NOT EXISTS detection_events (
-    id UUID PRIMARY KEY,
-    detection_id UUID REFERENCES detections_business(id),
-    event_type TEXT NOT NULL,
-    severity INT,
-    payload JSON,
-    created_by UUID REFERENCES users(id),
-    event_at TIMESTAMPTZ NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL
-);
-CREATE INDEX IF NOT EXISTS idx_detection_events_id ON detection_events (id, detection_id);
-
-CREATE TABLE IF NOT EXISTS detection_comments (
-    id UUID PRIMARY KEY,
-    detection_id UUID REFERENCES detections_business(id),
-    author_user_id UUID REFERENCES users(id),
-    body TEXT NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL,
-    updated_at TIMESTAMPTZ NOT NULL,
-    deleted_at TIMESTAMPTZ NULL
-);
-CREATE INDEX IF NOT EXISTS idx_detection_comments_id ON detection_comments (id, detection_id);
-
-
 

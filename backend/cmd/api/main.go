@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"github.com/jmoiron/sqlx"
-    _ "github.com/lib/pq"
 	"log"
 	"net/http"
 	"os"
@@ -11,6 +9,8 @@ import (
 
 	"forestmap/backend/internal/httpapi"
 	"forestmap/backend/internal/store"
+	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -34,7 +34,7 @@ func main() {
 
 	st := store.NewStore(db)
 	handler := httpapi.NewDroneHandler(st)
-    detectionHandler := httpapi.NewDetectionHandler(st)
+	detectionHandler := httpapi.NewDetectionHandler(st)
 
 	auth, err := httpapi.NewJWTAuth(
 		context.Background(),
@@ -49,19 +49,14 @@ func main() {
 
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("ok"))
+		_, _ = w.Write([]byte("ok"))
 	})
 
 	mux.HandleFunc("/v1/telemetry", auth.RequireRealmRole("drone", handler.HandleTelemetry))
-
-	
-    mux.HandleFunc("/v1/me", auth.Require(detectionHandler.HandleMe))
-
+	mux.HandleFunc("/v1/me", auth.Require(detectionHandler.HandleMe))
 	mux.HandleFunc("/v1/detections", auth.RequireRealmRole("drone", handler.HandleDetections))
-	mux.HandleFunc("/v1/detections:query", auth.RequireAnyRealmRole([]string{"viewer", "drone"}, handler.HandleDetectionsQuery))
-	mux.HandleFunc("/v1/detections/search", auth.Require(detectionHandler.HandleSearchDetections))
-	mux.HandleFunc("/v1/detections/", auth.Require(detectionHandler.HandleDetectionRoutes))
-	
+	mux.HandleFunc("/v1/detections:query", auth.RequireAnyRealmRole([]string{"viewer", "admin", "drone"}, handler.HandleDetectionsQuery))
+
 	log.Printf("listening on %s", addr)
 	if err := http.ListenAndServe(addr, logRequests(mux)); err != nil {
 		log.Fatal(err)

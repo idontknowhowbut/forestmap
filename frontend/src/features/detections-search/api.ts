@@ -13,7 +13,7 @@ import type {
 
 const USE_MOCKS = import.meta.env.VITE_USE_MOCKS !== 'false';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '';
-const QUERY_ENDPOINT = import.meta.env.VITE_DETECTIONS_QUERY_ENDPOINT ?? '/v1/detections:query';
+const QUERY_ENDPOINT = import.meta.env.VITE_DETECTIONS_QUERY_ENDPOINT ?? '/api/v1/detections:query';
 
 const MOCK_DETECTIONS: DetectionSummary[] = [
   {
@@ -23,7 +23,7 @@ const MOCK_DETECTIONS: DetectionSummary[] = [
     type: 'fire',
     status: 'active',
     score: 0.82,
-    severity: 'high',
+    severity: 75,
     title: 'Пожар 1',
     description: 'Точечная детекция пожара рядом с дорогой.',
     detectedAt: '2026-04-19T15:30:00Z',
@@ -43,7 +43,7 @@ const MOCK_DETECTIONS: DetectionSummary[] = [
     type: 'infection',
     status: 'active',
     score: 0.64,
-    severity: 'medium',
+    severity: 50,
     title: 'Заражение 1',
     description: 'Полигон зараженного участка леса.',
     detectedAt: '2026-04-15T11:30:00Z',
@@ -69,7 +69,7 @@ const MOCK_DETECTIONS: DetectionSummary[] = [
     type: 'logging',
     status: 'active',
     score: 0.51,
-    severity: 'medium',
+    severity: 45,
     title: 'Вырубка 1',
     description: 'Мультиполигон по участкам вырубки.',
     detectedAt: '2026-04-12T08:20:00Z',
@@ -104,7 +104,7 @@ const MOCK_DETECTIONS: DetectionSummary[] = [
     type: 'fire',
     status: 'active',
     score: 0.95,
-    severity: 'critical',
+    severity: 95,
     title: 'Пожар 2',
     description: 'Критическая точка возгорания.',
     detectedAt: '2026-04-17T18:45:00Z',
@@ -124,7 +124,7 @@ const MOCK_DETECTIONS: DetectionSummary[] = [
     type: 'infection',
     status: 'active',
     score: 0.21,
-    severity: 'low',
+    severity: 20,
     title: 'Заражение 2',
     description: 'Низкий риск, старая детекция.',
     detectedAt: '2026-03-28T14:20:00Z',
@@ -203,23 +203,27 @@ function buildBackendPayload(payload: DetectionSearchRequest): BackendDetections
 }
 
 function normalizeSeverity(value: unknown, score: number): DetectionSeverity {
-  if (value === 'low' || value === 'medium' || value === 'high' || value === 'critical') {
-    return value;
+  if (typeof value === 'string') {
+    const legacySeverityMap: Record<string, number> = {
+      low: 25,
+      medium: 50,
+      high: 75,
+      critical: 100,
+    };
+
+    const mapped = legacySeverityMap[value.toLowerCase()];
+    if (mapped !== undefined) {
+      return mapped;
+    }
   }
 
-  const rawNumeric = typeof value === 'number' ? value : Number(value ?? score);
-  const numeric = rawNumeric > 1 ? rawNumeric / 10 : rawNumeric;
+  const numeric = Number(value ?? score);
 
-  if (numeric >= 0.9) {
-    return 'critical';
+  if (!Number.isFinite(numeric)) {
+    return 0;
   }
-  if (numeric >= 0.7) {
-    return 'high';
-  }
-  if (numeric >= 0.4) {
-    return 'medium';
-  }
-  return 'low';
+
+  return Math.min(100, Math.max(0, Math.trunc(numeric)));
 }
 
 function normalizeClassType(value: unknown): DetectionClassType {

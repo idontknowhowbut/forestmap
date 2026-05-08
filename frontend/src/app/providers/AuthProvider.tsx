@@ -8,6 +8,8 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import type Keycloak from 'keycloak-js';
+import type { KeycloakConfig, KeycloakTokenParsed } from 'keycloak-js';
 import { setAccessToken } from '../../features/auth/session';
 import type { AuthContextValue, AuthMode, AuthUser, UserRole } from '../../features/auth/types';
 
@@ -17,14 +19,23 @@ type ProviderProps = {
   children: ReactNode;
 };
 
-type KeycloakLike = {
-  token?: string;
-  authenticated?: boolean;
-  tokenParsed?: Record<string, unknown>;
-  init: (options: Record<string, unknown>) => Promise<boolean>;
-  login: (options?: Record<string, unknown>) => Promise<void>;
-  logout: (options?: Record<string, unknown>) => Promise<void>;
-  updateToken: (minValidity: number) => Promise<boolean>;
+type KeycloakModule = {
+  default: new (config: string | KeycloakConfig) => Keycloak;
+};
+
+type MeResponse = {
+  data?: {
+    id?: string;
+    keycloakUserId?: string;
+    email?: string;
+    fullName?: string;
+    roles?: string[];
+    company?: {
+      id?: string;
+      name?: string;
+      code?: string;
+    };
+  };
 };
 
 const MOCK_AUTH_STORAGE_KEY = 'forestmap.mock.auth';
@@ -64,12 +75,19 @@ function buildMockUser(role: UserRole): AuthUser {
     role,
     roles: role === 'admin' ? ['viewer', 'admin'] : ['viewer'],
     companyName: 'СЕВ-ЗАП Лесничество',
+    companyCode: 'TEST',
   };
 }
 
-function collectRolesFromClaims(tokenParsed: Record<string, unknown> | undefined): string[] {
-  const realmAccess = tokenParsed?.realm_access as { roles?: string[] } | undefined;
-  const resourceAccess = tokenParsed?.resource_access as Record<string, { roles?: string[] }> | undefined;
+function collectRolesFromClaims(tokenParsed: KeycloakTokenParsed | undefined): string[] {
+  const realmAccess = (tokenParsed as KeycloakTokenParsed & {
+    realm_access?: { roles?: string[] };
+  } | undefined)?.realm_access;
+
+  const resourceAccess = (tokenParsed as KeycloakTokenParsed & {
+    resource_access?: Record<string, { roles?: string[] }>;
+  } | undefined)?.resource_access;
+
   const resourceRoles = resourceAccess
     ? Object.values(resourceAccess).flatMap((resource) => resource.roles ?? [])
     : [];
@@ -77,29 +95,70 @@ function collectRolesFromClaims(tokenParsed: Record<string, unknown> | undefined
   return Array.from(new Set([...(realmAccess?.roles ?? []), ...resourceRoles]));
 }
 
-function resolveRoleFromClaims(tokenParsed: Record<string, unknown> | undefined): UserRole {
-  const roles = collectRolesFromClaims(tokenParsed);
-  return roles.includes('admin') ? 'admin' : 'viewer';
+function normalizeRoles(roles: string[]): UserRole[] {
+  const result = new Set<UserRole>();
+
+  if (roles.includes('viewer')) {
+    result.add('viewer');
+  }
+  if (roles.includes('admin')) {
+    result.add('admin');
+  }
+  if (roles.includes('drone')) {
+    result.add('drone');
+  }
+
+  if (result.size === 0) {
+    result.add('viewer');
+  }
+
+  return Array.from(result);
 }
 
-function buildUserFromKeycloak(tokenParsed: Record<string, unknown> | undefined): AuthUser {
-  const role = resolveRoleFromClaims(tokenParsed);
-  const rolesFromToken = collectRolesFromClaims(tokenParsed);
-  const roles: UserRole[] = rolesFromToken.includes('admin') ? ['viewer', 'admin'] : ['viewer'];
+function resolveRoleFromRoles(roles: string[]): UserRole {
+  if (roles.includes('admin')) {
+    return 'admin';
+  }
+  if (roles.includes('drone')) {
+    return 'drone';
+  }
+  return 'viewer';
+}
+
+function buildUserFromKeycloak(tokenParsed: KeycloakTokenParsed | undefined): AuthUser {
+  const rawRoles = collectRolesFromClaims(tokenParsed);
+  const roles = normalizeRoles(rawRoles);
 
   return {
     id: String(tokenParsed?.sub ?? 'kc-user'),
     fullName: String(tokenParsed?.name ?? tokenParsed?.preferred_username ?? 'Keycloak User'),
     email: String(tokenParsed?.email ?? ''),
-    role,
+    role: resolveRoleFromRoles(rawRoles),
     roles,
+    companyId: null,
+    companyCode: null,
     companyName: null,
   };
 }
 
-async function importKeycloak(): Promise<{ default: new (config: Record<string, unknown>) => KeycloakLike }> {
-  const loader = new Function('specifier', 'return import(specifier)') as (specifier: string) => Promise<{ default: new (config: Record<string, unknown>) => KeycloakLike }>;
-  return loader('keycloak-js');
+function mergeUserProfile(baseUser: AuthUser, payload: MeResponse['data']): AuthUser {
+  const profileRoles = normalizeRoles(payload?.roles ?? []);
+  const effectiveRoles = profileRoles.length > 0 ? profileRoles : baseUser.roles;
+
+  return {
+    id: payload?.id ?? baseUser.id,
+    fullName: payload?.fullName ?? baseUser.fullName,
+    email: payload?.email ?? baseUser.email,
+    role: resolveRoleFromRoles(effectiveRoles),
+    roles: effectiveRoles,
+    companyId: payload?.company?.id ?? baseUser.companyId ?? null,
+    companyCode: payload?.company?.code ?? baseUser.companyCode ?? null,
+    companyName: payload?.company?.name ?? baseUser.companyName ?? null,
+  };
+}
+
+async function importKeycloak(): Promise<KeycloakModule> {
+  return import('keycloak-js');
 }
 
 function hasKeycloakConfig() {
@@ -110,6 +169,22 @@ function hasKeycloakConfig() {
   );
 }
 
+async function fetchMe(token: string): Promise<MeResponse['data'] | null> {
+  const response = await fetch('/api/v1/me', {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch /v1/me: ${response.status}`);
+  }
+
+  const json = (await response.json()) as MeResponse;
+  return json.data ?? null;
+}
+
 export function AuthProvider({ children }: ProviderProps) {
   const [initialized, setInitialized] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
@@ -117,7 +192,7 @@ export function AuthProvider({ children }: ProviderProps) {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const keycloakRef = useRef<KeycloakLike | null>(null);
+  const keycloakRef = useRef<Keycloak | null>(null);
 
   const setAuthState = useCallback((next: {
     authenticated: boolean;
@@ -139,10 +214,14 @@ export function AuthProvider({ children }: ProviderProps) {
     let refreshIntervalId: number | null = null;
 
     async function initializeAuth() {
-      if (hasKeycloakConfig()) {
+      const useMocks = import.meta.env.VITE_USE_MOCKS !== 'false';
+
+      if (!useMocks && hasKeycloakConfig()) {
+        writeMockAuth(null);
+
         try {
-          const { default: Keycloak } = await importKeycloak();
-          const keycloak = new Keycloak({
+          const { default: KeycloakCtor } = await importKeycloak();
+          const keycloak = new KeycloakCtor({
             url: import.meta.env.VITE_KEYCLOAK_URL,
             realm: import.meta.env.VITE_KEYCLOAK_REALM,
             clientId: import.meta.env.VITE_KEYCLOAK_CLIENT_ID,
@@ -161,13 +240,26 @@ export function AuthProvider({ children }: ProviderProps) {
           }
 
           if (isAuthenticated && keycloak.token) {
-            const nextUser = buildUserFromKeycloak(keycloak.tokenParsed);
+            const baseUser = buildUserFromKeycloak(keycloak.tokenParsed);
+            let enrichedUser = baseUser;
+
+            setAccessToken(keycloak.token);
+
+            try {
+              const profile = await fetchMe(keycloak.token);
+              if (profile) {
+                enrichedUser = mergeUserProfile(baseUser, profile);
+              }
+            } catch (profileError) {
+              console.warn('Failed to load /v1/me, falling back to token claims', profileError);
+            }
 
             setAuthState({
               authenticated: true,
               token: keycloak.token,
-              user: nextUser,
+              user: enrichedUser,
               mode: 'keycloak',
+              error: null,
             });
 
             refreshIntervalId = window.setInterval(async () => {
@@ -178,7 +270,7 @@ export function AuthProvider({ children }: ProviderProps) {
                   setAccessToken(keycloak.token);
                 }
               } catch {
-                // ignore, next action will re-auth
+                // ignore
               }
             }, 20000);
           } else {
@@ -187,6 +279,7 @@ export function AuthProvider({ children }: ProviderProps) {
               token: null,
               user: null,
               mode: 'keycloak',
+              error: null,
             });
           }
 
@@ -197,7 +290,19 @@ export function AuthProvider({ children }: ProviderProps) {
             return;
           }
 
-          setError(authError instanceof Error ? authError.message : 'Не удалось инициализировать Keycloak');
+          setAuthState({
+            authenticated: false,
+            token: null,
+            user: null,
+            mode: 'keycloak',
+            error:
+              authError instanceof Error
+                ? authError.message
+                : 'Не удалось инициализировать Keycloak',
+          });
+
+          setInitialized(true);
+          return;
         }
       }
 
@@ -209,6 +314,7 @@ export function AuthProvider({ children }: ProviderProps) {
           token: `mock-token-${storedUser.role}`,
           user: storedUser,
           mode: 'mock',
+          error: null,
         });
       } else {
         setAuthState({
@@ -216,6 +322,7 @@ export function AuthProvider({ children }: ProviderProps) {
           token: null,
           user: null,
           mode: 'mock',
+          error: null,
         });
       }
 
@@ -233,9 +340,14 @@ export function AuthProvider({ children }: ProviderProps) {
   }, [setAuthState]);
 
   const login = useCallback(async (role?: UserRole) => {
-    if (mode === 'keycloak' && keycloakRef.current) {
+    if (mode === 'keycloak') {
+      if (!keycloakRef.current) {
+        setError('Keycloak не инициализирован');
+        return;
+      }
+
       await keycloakRef.current.login({
-        redirectUri: window.location.href,
+        redirectUri: window.location.origin,
       });
       return;
     }
@@ -243,6 +355,7 @@ export function AuthProvider({ children }: ProviderProps) {
     const mockRole = role ?? 'viewer';
     const nextUser = buildMockUser(mockRole);
     writeMockAuth(nextUser);
+
     setAuthState({
       authenticated: true,
       token: `mock-token-${mockRole}`,
@@ -250,11 +363,13 @@ export function AuthProvider({ children }: ProviderProps) {
       mode: 'mock',
       error: null,
     });
+
     setInitialized(true);
   }, [mode, setAuthState]);
 
   const logout = useCallback(async () => {
     if (mode === 'keycloak' && keycloakRef.current) {
+      setAccessToken(null);
       await keycloakRef.current.logout({
         redirectUri: window.location.origin,
       });
@@ -262,6 +377,7 @@ export function AuthProvider({ children }: ProviderProps) {
     }
 
     writeMockAuth(null);
+
     setAuthState({
       authenticated: false,
       token: null,
@@ -278,6 +394,7 @@ export function AuthProvider({ children }: ProviderProps) {
 
     const nextUser = buildMockUser(role);
     writeMockAuth(nextUser);
+
     setAuthState({
       authenticated: true,
       token: `mock-token-${role}`,

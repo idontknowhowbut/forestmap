@@ -38,7 +38,7 @@ type DetectionBatchRequest struct {
 type DetectionObject struct {
 	Class         string         `json:"class"`
 	Score         float64        `json:"score"`
-	Severity      float64        `json:"severity"`
+	Severity      int            `json:"severity"`
 	GeometryGeo   GeoJSONPolygon `json:"geometry_geo"`
 	GeometryImage Box            `json:"geometry_image"`
 }
@@ -56,12 +56,14 @@ type GeoJSONPolygon struct {
 }
 
 type DetectionsQueryRequest struct {
-	Classes  []string `json:"classes,omitempty"` 
-	Geom     string   `json:"geom,omitempty"`    
-	BBox     []float64 `json:"bbox,omitempty"`   
+	Classes  []string        `json:"classes,omitempty"`
+	Geom     string          `json:"geom,omitempty"`
+	BBox     []float64       `json:"bbox,omitempty"`
 	AOI      json.RawMessage `json:"aoi,omitempty"`
-	MinScore *float64 `json:"min_score,omitempty"`
-	FlightID string   `json:"flight_id,omitempty"`
-	Since    *time.Time `json:"since,omitempty"`
-	Limit    int      `json:"limit,omitempty"`
+	MinScore *float64        `json:"min_score,omitempty"`
+	MaxScore *float64        `json:"max_score,omitempty"`
+	FlightID string          `json:"flight_id,omitempty"`
+	Since    *time.Time      `json:"since,omitempty"`
+	Until    *time.Time      `json:"until,omitempty"`
+	Limit    int             `json:"limit,omitempty"`
 }

@@ -12,6 +12,7 @@ services:
       OIDC_JWKS_URL: "${OIDC_JWKS_URL}"
     depends_on:
       - db
+      - keycloak
     restart: unless-stopped
     volumes:
       - uploads_data:/uploads
@@ -19,6 +20,13 @@ services:
   frontend:
     build:
       context: ../frontend
+      args:
+        VITE_KEYCLOAK_URL: "${VITE_KEYCLOAK_URL}"
+        VITE_KEYCLOAK_REALM: "${VITE_KEYCLOAK_REALM}"
+        VITE_KEYCLOAK_CLIENT_ID: "${VITE_KEYCLOAK_CLIENT_ID}"
+        VITE_USE_MOCKS: "${VITE_USE_MOCKS:-false}"
+        VITE_API_BASE_URL: "${VITE_API_BASE_URL:-}"
+        VITE_DETECTIONS_QUERY_ENDPOINT: "${VITE_DETECTIONS_QUERY_ENDPOINT:-/api/v1/detections:query}"
     restart: unless-stopped
 
   nginx:
@@ -30,23 +38,24 @@ services:
       - uploads_data:/uploads:ro
     depends_on:
       - api
-  #    - frontend
+      - frontend
       - keycloak
     restart: unless-stopped
 
   db:
     image: postgis/postgis:16-3.4-alpine
-    restart: always
+    restart: unless-stopped
     environment:
       POSTGRES_USER: "${POSTGRES_USER}"
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
       POSTGRES_DB: "${POSTGRES_DB}"
     ports:
-      - "127.0.0.1:${DB_PORT:-5432}:5432"
+      - "127.0.0.1:${DB_PORT:-55432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
-      - ./seed.sql:/docker-entrypoint-initdb.d/seed.sql:ro
+      - ./init.sql:/docker-entrypoint-initdb.d/00_init.sql:ro
+      - ./seed.sql:/docker-entrypoint-initdb.d/10_seed.sql:ro
+      - ./dev_detections_seed.sql:/docker-entrypoint-initdb.d/20_dev_detections_seed.sql:ro
 
   keycloak-db:
     image: postgres:16-alpine
@@ -63,28 +72,22 @@ services:
     restart: unless-stopped
     depends_on:
       - keycloak-db
-    volumes: 
+    volumes:
       - ./keycloak/themes/forestmap:/opt/keycloak/themes/forestmap:ro
+      - ./forestmap-realm-export.json:/opt/keycloak/data/import/forestmap-realm-export.json:ro
     environment:
-      # Bootstrap admin (важно при первом запуске / новом volume)
-      KEYCLOAK_ADMIN: "${KEYCLOAK_ADMIN:-admin}"
-      KEYCLOAK_ADMIN_PASSWORD: "${KEYCLOAK_ADMIN_PASSWORD}"
-
-      # DB
+      KC_BOOTSTRAP_ADMIN_USERNAME: "${KEYCLOAK_ADMIN:-admin}"
+      KC_BOOTSTRAP_ADMIN_PASSWORD: "${KEYCLOAK_ADMIN_PASSWORD}"
       KC_DB: postgres
       KC_DB_URL: "jdbc:postgresql://keycloak-db:5432/${KEYCLOAK_DB_NAME:-keycloak}"
       KC_DB_USERNAME: "${KEYCLOAK_DB_USER:-keycloak}"
       KC_DB_PASSWORD: "${KEYCLOAK_DB_PASSWORD}"
-
-      # Reverse proxy / base path
       KC_PROXY_HEADERS: xforwarded
       KC_HTTP_RELATIVE_PATH: /auth
-
-      # Какой внешний URL видит Keycloak (через nginx)
-      # Для вашего случая: http://localhost:8443/auth
       KC_HOSTNAME: "${KEYCLOAK_HOSTNAME:-http://localhost:8443/auth}"
     command:
       - start-dev
+      - --import-realm
     ports:
       - "127.0.0.1:${KEYCLOAK_PORT:-18080}:8080"
 
