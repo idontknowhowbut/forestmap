@@ -35,6 +35,7 @@ type FocusRequest =
   | null;
 
 type MapLayerMode = 'osm' | 'satellite';
+type SelectionSource = 'list' | 'map';
 
 const MAP_LAYER_STORAGE_KEY = 'forestmap.map.layer';
 
@@ -220,7 +221,7 @@ export function MapPage() {
   }, []);
 
   const handleSelectDetection = useCallback(
-    (id: string) => {
+    (id: string, source: SelectionSource = 'map') => {
       if (selectedDetectionId === id) {
         setSelectedDetectionId(null);
         return;
@@ -229,7 +230,7 @@ export function MapPage() {
       const item = items.find((detection) => detection.id === id);
       setSelectedDetectionId(id);
 
-      if (item) {
+      if (source === 'list' && item) {
         setFocusRequest({
           id: Date.now(),
           centroid: item.centroid,
@@ -443,7 +444,7 @@ export function MapPage() {
               <div
                 key={item.id}
                 className={`scroll-item ${selectedDetectionId === item.id ? 'scroll-item-selected' : ''}`}
-                onClick={() => handleSelectDetection(item.id)}
+                onClick={() => handleSelectDetection(item.id, 'list')}
               >
                 <div className="scroll-item__title">{item.title ?? item.id}</div>
                 <span className="bottom-label">
