@@ -36,6 +36,8 @@ type FocusRequest =
 
 type MapLayerMode = 'osm' | 'satellite';
 
+const MAP_LAYER_STORAGE_KEY = 'forestmap.map.layer';
+
 const SEARCH_DEBOUNCE_MS = 300;
 const DEFAULT_SCORE_MIN = 0;
 const DEFAULT_SCORE_MAX = 1;
@@ -57,6 +59,18 @@ function addDays(date: Date, days: number) {
 
 const DEFAULT_DATE_TO = toDateInputValue(new Date());
 const DEFAULT_DATE_FROM = toDateInputValue(addDays(new Date(), -30));
+
+function readStoredMapLayer(): MapLayerMode {
+  if (typeof window === 'undefined') {
+    return 'osm';
+  }
+  try {
+    const stored = window.localStorage.getItem(MAP_LAYER_STORAGE_KEY);
+    return stored === 'satellite' ? 'satellite' : 'osm';
+  } catch {
+    return 'osm';
+  }
+}
 
 function toStartOfDayIso(value: string) {
   return `${value}T00:00:00Z`;
@@ -85,7 +99,7 @@ export function MapPage() {
   const [dateFrom, setDateFrom] = useState(DEFAULT_DATE_FROM);
   const [dateTo, setDateTo] = useState(DEFAULT_DATE_TO);
   const [selectedTypes, setSelectedTypes] = useState<DetectionType[]>(DEFAULT_SELECTED_TYPES);
-  const [mapLayer, setMapLayer] = useState<MapLayerMode>('osm');
+  const [mapLayer, setMapLayer] = useState<MapLayerMode>(() => readStoredMapLayer());
 
   const [coords, setCoords] = useState({ lat: 60.1234, lng: 30.5678 });
   const [selectedDetectionId, setSelectedDetectionId] = useState<string | null>(null);
@@ -175,6 +189,14 @@ export function MapPage() {
       window.clearTimeout(timeoutId);
     };
   }, [bbox, loadDetections]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(MAP_LAYER_STORAGE_KEY, mapLayer);
+    } catch {
+      // ignore storage errors
+    }
+  }, [mapLayer]);
 
   const selectedDetection = useMemo(
     () => items.find((item) => item.id === selectedDetectionId) ?? null,

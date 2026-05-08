@@ -19,9 +19,10 @@ func (h *DetectionHandler) HandleMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	externalUserID := claims.ExternalUserID()
 	user, company, err := h.Store.EnsureUserAndCompanyByKeycloakUser(
 		r.Context(),
-		claims.Subject,
+		externalUserID,
 		claims.Email,
 		claims.FullName,
 		claims.RealmAccess.Roles,
@@ -34,7 +35,7 @@ func (h *DetectionHandler) HandleMe(w http.ResponseWriter, r *http.Request) {
 	resp := map[string]any{
 		"data": map[string]any{
 			"id":             user.ID,
-			"keycloakUserId": claims.Subject,
+			"keycloakUserId": externalUserID,
 			"email":          user.Email,
 			"fullName":       user.FullName,
 			"roles":          claims.RealmAccess.Roles,

@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS detections (
     company_id UUID REFERENCES companies(id),
     score FLOAT,
     severity FLOAT,
-    geometry_geo GEOMETRY(POLYGON, 4326),
+    geometry_geo GEOMETRY,
     geometry_image JSONB,
     image_path TEXT
 );

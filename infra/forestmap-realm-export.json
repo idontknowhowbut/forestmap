@@ -167,5 +167,12 @@
         "drone"
       ]
     }
-  ]
+  ],
+  "loginTheme": "forestmap",
+  "internationalizationEnabled": true,
+  "supportedLocales": [
+    "ru",
+    "en"
+  ],
+  "defaultLocale": "ru"
 }

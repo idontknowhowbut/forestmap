@@ -26,7 +26,7 @@ func (h *DetectionHandler) resolveCompanyIDFromClaims(r *http.Request) (string, 
 
 	_, company, err := h.Store.EnsureUserAndCompanyByKeycloakUser(
 		r.Context(),
-		claims.Subject,
+		claims.ExternalUserID(),
 		claims.Email,
 		claims.FullName,
 		claims.RealmAccess.Roles,
@@ -134,7 +134,7 @@ func (h *DetectionHandler) HandleCreateComment(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	comment, err := h.Store.CreateDetectionComment(r.Context(), id, companyID, claims.Subject, req.Body)
+	comment, err := h.Store.CreateDetectionComment(r.Context(), id, companyID, claims.ExternalUserID(), req.Body)
 	if err == store.ErrNotFound {
 		writeError(w, http.StatusNotFound, "NOT_FOUND", "Detection not found")
 		return

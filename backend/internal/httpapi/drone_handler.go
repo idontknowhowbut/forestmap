@@ -29,7 +29,7 @@ func (h *DroneHandler) resolveCompanyIDFromClaims(r *http.Request) (string, bool
 
 	_, company, err := h.Store.EnsureUserAndCompanyByKeycloakUser(
 		r.Context(),
-		claims.Subject,
+		claims.ExternalUserID(),
 		claims.Email,
 		claims.FullName,
 		claims.RealmAccess.Roles,

@@ -18,12 +18,30 @@ type JWTAuth struct {
 
 type KeycloakClaims struct {
 	jwt.RegisteredClaims
-	RealmAccess struct {
+	SubjectOverride   string `json:"sub"`
+	PreferredUsername string `json:"preferred_username"`
+	RealmAccess       struct {
 		Roles []string `json:"roles"`
 	} `json:"realm_access"`
 	CompanyID string `json:"company_id"`
-    Email     string `json:"email"`
-    FullName  string `json:"name"`
+	Email     string `json:"email"`
+	FullName  string `json:"name"`
+}
+
+func (c *KeycloakClaims) ExternalUserID() string {
+	if c == nil {
+		return ""
+	}
+	if v := strings.TrimSpace(c.RegisteredClaims.Subject); v != "" {
+		return v
+	}
+	if v := strings.TrimSpace(c.SubjectOverride); v != "" {
+		return v
+	}
+	if v := strings.TrimSpace(c.PreferredUsername); v != "" {
+		return v
+	}
+	return strings.TrimSpace(c.Email)
 }
 
 func NewJWTAuth(ctx context.Context, issuer, jwksURL string) (*JWTAuth, error) {
@@ -42,10 +60,7 @@ func NewJWTAuth(ctx context.Context, issuer, jwksURL string) (*JWTAuth, error) {
 		return nil, fmt.Errorf("init jwks keyfunc: %w", err)
 	}
 
-	return &JWTAuth{
-		issuer: issuer,
-		jwks:   k,
-	}, nil
+	return &JWTAuth{issuer: issuer, jwks: k}, nil
 }
 
 func (a *JWTAuth) Require(next http.HandlerFunc) http.HandlerFunc {
@@ -57,13 +72,13 @@ func (a *JWTAuth) Require(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 		ctx := context.WithValue(r.Context(), claimsKey, claims)
-        next.ServeHTTP(w, r.WithContext(ctx))
+		next.ServeHTTP(w, r.WithContext(ctx))
 	}
 }
 
 type contextKey string
-const claimsKey contextKey = "claims"
 
+const claimsKey contextKey = "claims"
 
 func (a *JWTAuth) RequireRealmRole(role string, next http.HandlerFunc) http.HandlerFunc {
 	return a.RequireAnyRealmRole([]string{role}, next)
@@ -82,14 +97,11 @@ func (a *JWTAuth) RequireAnyRealmRole(roles []string, next http.HandlerFunc) htt
 			http.Error(w, "Forbidden", http.StatusForbidden)
 			return
 		}
-        ctx := context.WithValue(r.Context(), claimsKey, claims)
-        next.ServeHTTP(w, r.WithContext(ctx)) 
-		
+		ctx := context.WithValue(r.Context(), claimsKey, claims)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	}
 }
 
-
-// ClaimsFromContext возвращает все claims из контекста.
 func ClaimsFromContext(ctx context.Context) (*KeycloakClaims, bool) {
 	claims, ok := ctx.Value(claimsKey).(*KeycloakClaims)
 	if !ok || claims == nil {
@@ -98,17 +110,13 @@ func ClaimsFromContext(ctx context.Context) (*KeycloakClaims, bool) {
 	return claims, true
 }
 
-
-
 func CompanyIDFromContext(ctx context.Context) (string, bool) {
-    claims, ok := ctx.Value(claimsKey).(*KeycloakClaims)
-    if !ok || claims.CompanyID == "" {
-        return "", false
-    }
-    return claims.CompanyID, true
+	claims, ok := ctx.Value(claimsKey).(*KeycloakClaims)
+	if !ok || claims.CompanyID == "" {
+		return "", false
+	}
+	return claims.CompanyID, true
 }
-
-
 
 func (a *JWTAuth) parseBearerToken(r *http.Request) (*KeycloakClaims, error) {
 	authz := r.Header.Get("Authorization")

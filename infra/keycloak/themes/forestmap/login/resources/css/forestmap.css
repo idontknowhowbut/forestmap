@@ -1,0 +1,447 @@
+:root {
+  --fm-text: rgb(243, 244, 246);
+  --fm-text-soft: rgba(243, 244, 246, 0.72);
+  --fm-text-faint: rgba(243, 244, 246, 0.52);
+
+  --fm-accent: rgb(15, 122, 58);
+  --fm-accent-hover: rgb(18, 142, 68);
+  --fm-accent-shadow: rgba(15, 122, 58, 0.28);
+
+  --fm-bg-top: #232628;
+  --fm-bg-mid: #1d1f21;
+  --fm-bg-bottom: #17191b;
+
+  --fm-card: rgba(34, 36, 38, 0.94);
+  --fm-input: rgba(44, 47, 49, 0.96);
+  --fm-input-hover: rgb(52, 56, 58);
+  --fm-border: rgba(243, 244, 246, 0.08);
+  --fm-border-strong: rgba(243, 244, 246, 0.16);
+  --fm-focus: rgba(15, 122, 58, 0.18);
+
+  --fm-radius-xl: 20px;
+  --fm-radius-lg: 12px;
+  --fm-shadow: 0 22px 48px rgba(0, 0, 0, 0.34);
+}
+
+body.login-pf,
+body {
+  background:
+    radial-gradient(circle at top, rgba(15, 122, 58, 0.10) 0%, transparent 24%),
+    linear-gradient(180deg, var(--fm-bg-top) 0%, var(--fm-bg-mid) 55%, var(--fm-bg-bottom) 100%) !important;
+  color: var(--fm-text) !important;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+}
+
+.kcLoginClass {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+}
+
+.login-pf-page,
+.kcLoginClass .pf-v5-c-login__container {
+  max-width: 460px;
+  width: 100%;
+}
+
+.pf-v5-c-login__main,
+.login-pf-page .card-pf,
+.kcLoginClass .pf-v5-c-card {
+  background: var(--fm-card) !important;
+  border: 1px solid var(--fm-border) !important;
+  border-radius: var(--fm-radius-xl) !important;
+  box-shadow: var(--fm-shadow) !important;
+  color: var(--fm-text) !important;
+  backdrop-filter: blur(14px);
+  padding: 28px 28px 24px !important;
+}
+
+.pf-v5-c-login__main-header,
+.login-pf-header,
+#kc-page-title {
+  color: var(--fm-text) !important;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+}
+
+#kc-page-title {
+  font-size: 22px !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+  margin-bottom: 22px !important;
+}
+
+#kc-header-wrapper,
+.kcLogoText {
+  color: transparent !important;
+  font-size: 0 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  text-align: center;
+  margin-bottom: 22px !important;
+}
+
+#kc-header-wrapper::before,
+.kcLogoText::before {
+  content: "Forestmap";
+  display: inline-block;
+  color: rgb(243, 244, 246) !important;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 36px !important;
+  font-weight: 300 !important;
+  letter-spacing: 0.04em !important;
+  line-height: 1.05 !important;
+  text-transform: none !important;
+}
+
+label,
+.pf-v5-c-form__label,
+.pf-v5-c-form__label-text {
+  color: var(--fm-text-soft) !important;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+}
+
+.pf-v5-c-form-control,
+input[type="text"],
+input[type="password"],
+input[type="email"] {
+  background: var(--fm-input) !important;
+  border: 1px solid var(--fm-border) !important;
+  color: var(--fm-text) !important;
+  border-radius: var(--fm-radius-lg) !important;
+  min-height: 46px !important;
+  box-shadow: none !important;
+  outline: none !important;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 14px !important;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+.pf-v5-c-form-control::placeholder,
+input[type="text"]::placeholder,
+input[type="password"]::placeholder,
+input[type="email"]::placeholder {
+  color: var(--fm-text-faint) !important;
+}
+
+.pf-v5-c-form-control:focus,
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="email"]:focus {
+  border-color: var(--fm-accent) !important;
+  box-shadow: 0 0 0 3px var(--fm-focus) !important;
+  background: rgba(52, 56, 58, 0.98) !important;
+}
+
+.pf-v5-c-form-control[aria-invalid="true"],
+.pf-v5-c-form-control.pf-m-error,
+.pf-v5-c-form-control.pf-m-warning,
+input[aria-invalid="true"],
+input.pf-m-error,
+input.pf-m-warning {
+  background: var(--fm-input) !important;
+  border: 1px solid rgba(239, 68, 68, 0.55) !important;
+  box-shadow: none !important;
+  background-image: none !important;
+}
+
+.pf-v5-c-form-control[aria-invalid="true"]:focus,
+.pf-v5-c-form-control.pf-m-error:focus,
+input[aria-invalid="true"]:focus {
+  border-color: rgba(239, 68, 68, 0.7) !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+  background-image: none !important;
+}
+
+.pf-v5-c-form-control::after,
+.pf-v5-c-form-control::before {
+  display: none !important;
+}
+
+.pf-v5-c-button.pf-m-primary,
+input[type="submit"] {
+  background: linear-gradient(135deg, rgb(15, 122, 58) 0%, rgb(18, 142, 68) 100%) !important;
+  border: none !important;
+  border-radius: var(--fm-radius-lg) !important;
+  color: #fff !important;
+  min-height: 46px !important;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  box-shadow: 0 12px 28px var(--fm-accent-shadow) !important;
+  transition: filter 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.pf-v5-c-button.pf-m-primary:hover,
+input[type="submit"]:hover {
+  filter: brightness(1.04);
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px rgba(15, 122, 58, 0.32) !important;
+}
+
+.pf-v5-c-button.pf-m-primary:active,
+input[type="submit"]:active {
+  transform: translateY(0);
+}
+
+a,
+#kc-form-options a,
+#kc-info a,
+.login-pf-page a {
+  color: var(--fm-accent) !important;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+}
+
+a:hover,
+#kc-form-options a:hover,
+#kc-info a:hover,
+.login-pf-page a:hover {
+  color: var(--fm-accent-hover) !important;
+}
+
+#kc-form-options,
+#kc-info,
+.pf-v5-c-login__main-footer-band,
+.pf-v5-c-login__main-footer-links,
+.pf-v5-c-login__main-footer-band *,
+.pf-v5-c-login__main-footer-links * {
+  color: var(--fm-text-soft) !important;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 13px !important;
+}
+
+.pf-v5-c-alert,
+.alert {
+  background: rgba(15, 122, 58, 0.12) !important;
+  border: 1px solid rgba(15, 122, 58, 0.38) !important;
+  border-radius: 12px !important;
+  color: var(--fm-text) !important;
+  box-shadow: none !important;
+}
+
+.pf-v5-c-alert.pf-m-danger,
+.alert-error {
+  background: rgba(220, 38, 38, 0.12) !important;
+  border-color: rgba(220, 38, 38, 0.28) !important;
+}
+
+.pf-v5-c-alert__title {
+  color: var(--fm-text) !important;
+}
+
+hr {
+  border: 0 !important;
+  border-top: 1px solid var(--fm-border) !important;
+}
+
+/* language selector: exact DOM from current Keycloak page */
+div.pf-v5-c-form-control:has(> #login-select-toggle) {
+  min-height: 44px !important;
+  height: 44px !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(243, 244, 246, 0.14) !important;
+  background: var(--fm-input) !important;
+  box-shadow: none !important;
+}
+
+div.pf-v5-c-form-control:has(> #login-select-toggle):hover {
+  border-color: rgba(243, 244, 246, 0.2) !important;
+  background: var(--fm-input-hover) !important;
+}
+
+div.pf-v5-c-form-control:has(> #login-select-toggle):focus-within {
+  border-color: var(--fm-accent) !important;
+  box-shadow: 0 0 0 3px var(--fm-focus) !important;
+}
+
+#login-select-toggle {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  flex: 1 1 auto !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  padding: 0 14px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  outline: none !important;
+  background: transparent !important;
+  color: var(--fm-text) !important;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  box-shadow: none !important;
+  cursor: pointer !important;
+}
+
+#login-select-toggle option {
+  color: #111827 !important;
+}
+
+div.pf-v5-c-form-control:has(> #login-select-toggle) .pf-v5-c-form-control__utilities {
+  width: 42px !important;
+  min-width: 42px !important;
+  height: 42px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-left: 1px solid rgba(243, 244, 246, 0.08) !important;
+  background: transparent !important;
+  color: var(--fm-text-soft) !important;
+}
+
+div.pf-v5-c-form-control:has(> #login-select-toggle) .pf-v5-c-form-control__toggle-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+div.pf-v5-c-form-control:has(> #login-select-toggle) .pf-v5-svg {
+  fill: currentColor !important;
+  color: currentColor !important;
+}
+
+/* password eye button */
+.pf-v5-c-input-group {
+  display: flex !important;
+  align-items: stretch !important;
+  gap: 0 !important;
+}
+
+.pf-v5-c-input-group .pf-v5-c-form-control {
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+
+.pf-v5-c-input-group .pf-v5-c-button,
+.pf-v5-c-input-group button,
+.pf-v5-c-button.pf-m-control {
+  min-width: 52px !important;
+  width: 52px !important;
+  border: 1px solid rgba(243, 244, 246, 0.08) !important;
+  border-left: none !important;
+  border-top-right-radius: 12px !important;
+  border-bottom-right-radius: 12px !important;
+  background: var(--fm-input) !important;
+  color: var(--fm-text-soft) !important;
+  box-shadow: none !important;
+}
+
+.pf-v5-c-input-group .pf-v5-c-button:hover,
+.pf-v5-c-input-group button:hover,
+.pf-v5-c-button.pf-m-control:hover {
+  background: rgba(15, 122, 58, 0.12) !important;
+  border-color: rgba(15, 122, 58, 0.35) !important;
+  color: var(--fm-text) !important;
+}
+
+.pf-v5-c-input-group .pf-v5-c-button:focus,
+.pf-v5-c-input-group button:focus,
+.pf-v5-c-button.pf-m-control:focus {
+  border-color: var(--fm-accent) !important;
+  box-shadow: 0 0 0 3px var(--fm-focus) !important;
+}
+
+.pf-v5-c-input-group .pf-v5-c-button svg,
+.pf-v5-c-input-group button svg,
+.pf-v5-c-button.pf-m-control svg {
+  fill: currentColor !important;
+  color: currentColor !important;
+}
+
+/* remember me */
+.pf-v5-c-check {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  min-height: 20px !important;
+  line-height: 1 !important;
+}
+
+.pf-v5-c-check__input,
+#rememberMe {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  width: 16px !important;
+  height: 16px !important;
+  margin: 0 !important;
+  border-radius: 5px !important;
+  border: 1px solid rgba(243, 244, 246, 0.18) !important;
+  background: var(--fm-input) !important;
+  display: inline-grid !important;
+  place-content: center !important;
+  flex: 0 0 16px !important;
+  position: relative !important;
+  top: 0 !important;
+  box-shadow: none !important;
+}
+
+.pf-v5-c-check__input::before,
+#rememberMe::before {
+  content: "" !important;
+  width: 9px !important;
+  height: 9px !important;
+  transform: scale(0) !important;
+  transition: transform 0.12s ease-in-out !important;
+  box-shadow: inset 1em 1em rgb(243, 244, 246) !important;
+  clip-path: polygon(14% 44%, 0 65%, 42% 100%, 100% 16%, 80% 0, 38% 62%) !important;
+}
+
+.pf-v5-c-check__input:checked,
+#rememberMe:checked {
+  background: var(--fm-accent) !important;
+  border-color: var(--fm-accent) !important;
+}
+
+.pf-v5-c-check__input:checked::before,
+#rememberMe:checked::before {
+  transform: scale(1) !important;
+}
+
+.pf-v5-c-check__input:focus,
+#rememberMe:focus {
+  box-shadow: 0 0 0 3px var(--fm-focus) !important;
+}
+
+.pf-v5-c-check__label,
+label[for="rememberMe"] {
+  margin: 0 !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  line-height: 1.2 !important;
+  color: var(--fm-text-soft) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+@media (max-width: 640px) {
+  .kcLoginClass {
+    padding: 20px 12px;
+    align-items: flex-start;
+  }
+
+  #kc-header-wrapper::before,
+  .kcLogoText::before {
+    font-size: 32px !important;
+  }
+
+  .pf-v5-c-login__main,
+  .login-pf-page .card-pf,
+  .kcLoginClass .pf-v5-c-card {
+    padding: 22px 18px 18px !important;
+    border-radius: 16px !important;
+  }
+}

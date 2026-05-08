@@ -46,6 +46,18 @@ func (s *Store) EnsureUserAndCompanyByKeycloakUser(
 	fullName string,
 	roles []string,
 ) (*model.User, *model.Company, error) {
+	keycloakUserID = strings.TrimSpace(keycloakUserID)
+	email = strings.TrimSpace(email)
+	fullName = strings.TrimSpace(fullName)
+	if keycloakUserID == "" {
+		keycloakUserID = email
+	}
+	if keycloakUserID == "" {
+		keycloakUserID = fullName
+	}
+	if keycloakUserID == "" {
+		return nil, nil, fmt.Errorf("empty external user id")
+	}
 	tx, err := s.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return nil, nil, fmt.Errorf("begin tx: %w", err)
